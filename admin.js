@@ -8,14 +8,14 @@ const animeRef = db.ref("anime");
 let allAnime = [];
 let currentEditId = null;
 
-// Load all anime
+// ---- Load all anime (real-time) ----
 animeRef.on("value", (snap) => {
   const data = snap.val() || {};
   allAnime = Object.entries(data).map(([id, val]) => ({ id, ...val }));
   renderAdminList(allAnime);
 });
 
-// --- Save / Update Anime ---
+// ---- Save / Update ----
 function saveAnime() {
   const title = document.getElementById("aTitle").value.trim();
   const poster = document.getElementById("aPoster").value.trim();
@@ -38,38 +38,40 @@ function saveAnime() {
     animeRef.child(currentEditId).update(anime).then(() => {
       alert("✅ Updated successfully!");
       resetForm();
-    });
+    }).catch(e => alert("❌ Error: " + e.message));
   } else {
     anime.createdAt = Date.now();
     animeRef.push(anime).then(() => {
       alert("✅ Anime added successfully!");
       resetForm();
-    });
+    }).catch(e => alert("❌ Error: " + e.message));
   }
 }
 
 function resetForm() {
   ["aTitle","aPoster","aBanner","aYear","aRating","aGenres","aEpisodes","aDesc"].forEach(id => {
-    document.getElementById(id).value = "";
+    const el = document.getElementById(id);
+    if (el) el.value = "";
   });
   document.getElementById("aTop10").checked = false;
   currentEditId = null;
 }
 
-// --- Render Admin List ---
+// ---- Admin list ----
 function renderAdminList(list) {
   const el = document.getElementById("adminList");
+  if (!el) return;
   if (!list.length) { el.innerHTML = '<p class="empty-msg">No anime yet.</p>'; return; }
   el.innerHTML = list.map(a => `
     <div class="admin-list-item">
       <img src="${a.poster||''}" onerror="this.src='https://via.placeholder.com/50x65'">
       <div class="info">
-        <strong>${a.title}</strong>
+        <strong>${a.title||'Untitled'}</strong>
         <small>${a.year||''} ${a.rating?'⭐'+a.rating:''} • ${a.episodes?Object.keys(a.episodes).length:0} eps</small>
       </div>
       <button class="btn-edit" onclick="editAnime('${a.id}')">Edit</button>
-      <button class="btn-episodes" onclick="openEpisodes('${a.id}','${a.title.replace(/'/g,"\\'")}')">Episodes</button>
-      <button class="btn-delete" onclick="deleteAnime('${a.id}','${a.title.replace(/'/g,"\\'")}')">Del</button>
+      <button class="btn-episodes" onclick="openEpisodes('${a.id}','${(a.title||'').replace(/'/g,"\\'")}')">Eps</button>
+      <button class="btn-delete" onclick="deleteAnime('${a.id}','${(a.title||'').replace(/'/g,"\\'")}')">Del</button>
     </div>
   `).join("");
 }
@@ -95,14 +97,14 @@ function deleteAnime(id, title) {
   animeRef.child(id).remove().then(() => alert("🗑️ Deleted"));
 }
 
-// --- Admin Search ---
-const adminSearch = document.getElementById("adminSearch");
-if (adminSearch) {
-  adminSearch.addEventListener("input", (e) => {
+// ---- Admin Search ----
+const adminSearchInput = document.getElementById("adminSearch");
+if (adminSearchInput) {
+  adminSearchInput.addEventListener("input", (e) => {
     const q = e.target.value.trim().toLowerCase();
     const results = document.getElementById("adminSearchResults");
     if (!q) { results.innerHTML = ""; return; }
-    const filtered = allAnime.filter(a => a.title.toLowerCase().includes(q));
+    const filtered = allAnime.filter(a => (a.title||"").toLowerCase().includes(q));
     if (!filtered.length) {
       results.innerHTML = '<p class="empty-msg">No match. Upar form se naya add karein.</p>';
       return;
@@ -116,7 +118,7 @@ if (adminSearch) {
   });
 }
 
-// --- Episodes ---
+// ---- Episodes ----
 function openEpisodes(id, title) {
   currentEditId = id;
   document.getElementById("currentAnimeName").textContent = title;
@@ -126,6 +128,7 @@ function openEpisodes(id, title) {
 }
 
 function loadEpisodes(id) {
+  animeRef.child(id).child("episodes").off();
   animeRef.child(id).child("episodes").on("value", (snap) => {
     const eps = snap.val() || {};
     const list = Object.entries(eps).sort((a,b) => a[1].number - b[1].number);
