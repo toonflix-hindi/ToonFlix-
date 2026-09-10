@@ -5,12 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Panel - ToonFlix</title>
 <link rel="stylesheet" href="style.css">
+<script>
+  // 🔐 Login check — agar login nahi hai toh login page bhej do
+  if (sessionStorage.getItem("toonflix_admin") !== "true" &&
+      localStorage.getItem("toonflix_admin") !== "true") {
+    window.location.replace("login.html");
+  }
+</script>
 </head>
 <body>
-<header>
-  <div class="header-inner">
-    <a href="index.html" class="logo">🔥 Toon<span>Flix</span> Admin</a>
-    <nav><a href="index.html">← Site</a></nav>
+
+<header class="top-header">
+  <a href="index.html" class="logo">🔥 Toon<span>Flix</span> Admin</a>
+  <div class="header-actions">
+    <a href="index.html" class="admin-btn">← Site</a>
+    <button onclick="logout()" class="logout-btn">🚪 Logout</button>
   </div>
 </header>
 
@@ -35,11 +44,11 @@
     </div>
   </section>
 
-  <!-- Search Anime (Auto-suggests existing) -->
+  <!-- Search Anime -->
   <section class="admin-section">
     <h2>🔍 Search Existing Anime (Update karne ke liye)</h2>
-    <input id="adminSearch" placeholder="Type anime name..." style="width:100%;padding:12px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;">
-    <div class="cards-grid" id="adminSearchResults"></div>
+    <input id="adminSearch" placeholder="Type anime name..." style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#0f0f1a;color:#fff;font-family:inherit;font-size:0.9rem;outline:none;">
+    <div class="cards-grid" id="adminSearchResults" style="margin-top:15px;"></div>
   </section>
 
   <!-- All Anime Manager -->
@@ -58,7 +67,7 @@
       <input id="epLink" placeholder="Video Embed URL / Link *">
       <button class="primary-btn" onclick="addEpisode()">➕ Add Episode</button>
     </div>
-    <div id="episodeList"></div>
+    <div id="episodeList" style="margin-top:15px;"></div>
   </section>
 
 </div>
@@ -66,5 +75,13 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="admin.js"></script>
+<script>
+function logout() {
+  if (!confirm("Logout karna chahte ho?")) return;
+  sessionStorage.removeItem("toonflix_admin");
+  localStorage.removeItem("toonflix_admin");
+  window.location.href = "login.html";
+}
+</script>
 </body>
 </html>
