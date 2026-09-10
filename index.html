@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ToonFlix Hindi - Watch Anime Online</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <a href="index.html" class="logo">🔥 Toon<span>Flix</span> Hindi</a>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Anime search karein...">
+      <button id="searchBtn">🔍</button>
+    </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="#genres">Genres</a>
+      <a href="#top10">Top 10</a>
+      <a href="admin.html" class="admin-btn">Admin</a>
+    </nav>
+  </div>
+</header>
+
+<!-- Newly Updated Section -->
+<section class="section">
+  <h2 class="section-title">🆕 Newly Updated</h2>
+  <div class="cards-grid" id="newlyUpdated"></div>
+</section>
+
+<!-- Genre Filters -->
+<section class="section" id="genres">
+  <h2 class="section-title">🎭 Genres</h2>
+  <div class="genre-btns" id="genreBtns"></div>
+  <div class="cards-grid" id="genreCards"></div>
+</section>
+
+<!-- Top 10 -->
+<section class="section" id="top10">
+  <h2 class="section-title">🏆 Top 10 Anime</h2>
+  <div class="top10-grid" id="top10Grid"></div>
+</section>
+
+<!-- All Anime -->
+<section class="section">
+  <h2 class="section-title">📺 All Anime</h2>
+  <div class="cards-grid" id="allAnime"></div>
+</section>
+
+<footer>
+  <p>© 2025 ToonFlix Hindi — Made with ❤️</p>
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

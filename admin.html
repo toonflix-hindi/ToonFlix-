@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel - ToonFlix</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <a href="index.html" class="logo">🔥 Toon<span>Flix</span> Admin</a>
+    <nav><a href="index.html">← Site</a></nav>
+  </div>
+</header>
+
+<div class="admin-container">
+
+  <!-- Add Anime Form -->
+  <section class="admin-section">
+    <h2>➕ Add / Update Anime</h2>
+    <div class="form-grid">
+      <input id="aTitle" placeholder="Anime Title *">
+      <input id="aPoster" placeholder="Poster Image URL *">
+      <input id="aBanner" placeholder="Banner Image URL (optional)">
+      <input id="aYear" placeholder="Year (e.g. 2024)">
+      <input id="aRating" placeholder="Rating (e.g. 8.5)">
+      <input id="aGenres" placeholder="Genres (comma separated: Action,Adventure)">
+      <input id="aEpisodes" placeholder="Total Episodes">
+      <textarea id="aDesc" placeholder="Description / Story"></textarea>
+      <label class="checkbox-label">
+        <input type="checkbox" id="aTop10"> Add to Top 10
+      </label>
+      <button class="primary-btn" onclick="saveAnime()">💾 Save Anime</button>
+    </div>
+  </section>
+
+  <!-- Search Anime (Auto-suggests existing) -->
+  <section class="admin-section">
+    <h2>🔍 Search Existing Anime (Update karne ke liye)</h2>
+    <input id="adminSearch" placeholder="Type anime name..." style="width:100%;padding:12px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;">
+    <div class="cards-grid" id="adminSearchResults"></div>
+  </section>
+
+  <!-- All Anime Manager -->
+  <section class="admin-section">
+    <h2>📚 All Anime (Delete / Edit)</h2>
+    <div class="admin-list" id="adminList"></div>
+  </section>
+
+  <!-- Add Episode -->
+  <section class="admin-section" id="episodeSection" style="display:none;">
+    <h2>🎬 Add Episodes to: <span id="currentAnimeName"></span></h2>
+    <div class="form-grid">
+      <input id="epNumber" placeholder="Episode Number" type="number">
+      <input id="epTitle" placeholder="Episode Title">
+      <input id="epThumb" placeholder="Thumbnail URL (optional)">
+      <input id="epLink" placeholder="Video Embed URL / Link *">
+      <button class="primary-btn" onclick="addEpisode()">➕ Add Episode</button>
+    </div>
+    <div id="episodeList"></div>
+  </section>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
