@@ -16,8 +16,13 @@
 <body>
 
 <header class="top-header">
-  <a href="index.html" class="logo">🔥 Toon<span>Flix</span> Admin</a>
+  <a href="index.html" class="logo">
+    <span class="logo-icon">🔥</span>
+    <span class="logo-text">Toon<span>Flix</span></span>
+    <span class="logo-badge">ADMIN</span>
+  </a>
   <div class="header-actions">
+    <a href="analytics.html" class="admin-btn" style="background: linear-gradient(135deg, #22d3ee, #3b82f6);">📊 Analytics</a>
     <a href="index.html" class="admin-btn">← Site</a>
     <button onclick="logout()" class="logout-btn">🚪 Logout</button>
   </div>
@@ -44,10 +49,10 @@
     </div>
   </section>
 
-  <!-- Search Anime -->
+  <!-- Search Existing Anime -->
   <section class="admin-section">
     <h2>🔍 Search Existing Anime (Update karne ke liye)</h2>
-    <input id="adminSearch" placeholder="Type anime name..." style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#0f0f1a;color:#fff;font-family:inherit;font-size:0.9rem;outline:none;">
+    <input id="adminSearch" placeholder="Type anime name..." style="width:100%;padding:13px 15px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:#0f0f1a;color:#fff;font-family:inherit;font-size:0.9rem;outline:none;">
     <div class="cards-grid" id="adminSearchResults" style="margin-top:15px;"></div>
   </section>
 
@@ -61,16 +66,24 @@
   <section class="admin-section" id="episodeSection" style="display:none;">
     <h2>🎬 Add Episodes to: <span id="currentAnimeName"></span></h2>
     <div class="form-grid">
-      <input id="epNumber" placeholder="Episode Number" type="number">
-      <input id="epTitle" placeholder="Episode Title">
+      <input id="epNumber" placeholder="Episode Number *" type="number">
+      <input id="epTitle" placeholder="Episode Title (optional)">
+      <input id="epLink" placeholder="🎬 Server 1 URL (Main) *">
+      <input id="epLink2" placeholder="🎬 Server 2 URL (Backup - optional)">
+      <input id="epLink3" placeholder="🎬 Server 3 URL (optional)">
+      <input id="epTelegram" placeholder="📱 Telegram Link (channel/group/post URL)">
       <input id="epThumb" placeholder="Thumbnail URL (optional)">
-      <input id="epLink" placeholder="Video Embed URL / Link *">
       <button class="primary-btn" onclick="addEpisode()">➕ Add Episode</button>
     </div>
     <div id="episodeList" style="margin-top:15px;"></div>
   </section>
 
 </div>
+
+<footer class="premium-footer">
+  <div class="footer-logo">🔥 Toon<span>Flix</span> Admin</div>
+  <p class="footer-copy">© 2025 ToonFlix Hindi — Admin Panel</p>
+</footer>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
