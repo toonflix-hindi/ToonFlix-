@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════
-// TOONFLIX - SCRIPT.JS (SAFE)
+// TOONFLIX - SCRIPT.JS (DONO BUTTONS VERSION)
 // ═══════════════════════════════════════════
 
 (function() {
@@ -37,7 +37,9 @@
       return String(str || "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
     }
 
-    // ─── Card HTML ───
+    // ═══════════════════════════════════════════
+    // CARD HTML
+    // ═══════════════════════════════════════════
     function cardHTML(anime, showNew, rank) {
       const poster = anime.poster || "https://via.placeholder.com/300x400?text=No+Image";
       const isNew = showNew && (Date.now() - (anime.createdAt||0) < 7*24*60*60*1000);
@@ -57,7 +59,9 @@
         </div>`;
     }
 
-    // ─── Render Sections ───
+    // ═══════════════════════════════════════════
+    // RENDER SECTIONS
+    // ═══════════════════════════════════════════
     function renderHero(list) {
       const el = document.getElementById("heroSlider");
       if (!el) return;
@@ -153,7 +157,9 @@
       if (el) el.scrollIntoView({ behavior: "smooth" });
     };
 
-    // ─── Home Page Load ───
+    // ═══════════════════════════════════════════
+    // HOME PAGE
+    // ═══════════════════════════════════════════
     if (document.getElementById("allAnime")) {
       console.log("🏠 Home page — loading anime...");
 
@@ -193,7 +199,9 @@
       });
     }
 
-    // ─── Continue Watching ───
+    // ═══════════════════════════════════════════
+    // CONTINUE WATCHING
+    // ═══════════════════════════════════════════
     window.renderContinueWatching = function() {
       const section = document.getElementById("continueWatchingSection");
       const el = document.getElementById("continueWatching");
@@ -204,11 +212,11 @@
         if (!history.length) { section.style.display = "none"; return; }
         section.style.display = "block";
         el.innerHTML = history.slice(0, 10).map(h => `
-          <div class="anime-card" onclick="location.href='anime.html?id=${h.animeId}'">
+          <div class="anime-card" onclick="location.href='watch.html?anime=${h.animeId}&ep=${h.epNumber}'">
             <img src="${h.poster || 'https://via.placeholder.com/300x400'}">
             <div class="card-info">
               <h3>${h.title}</h3>
-              <p>EP ${h.epNumber}</p>
+              <p>EP ${h.epNumber} ${h.epTitle ? "• " + h.epTitle : ""}</p>
             </div>
           </div>
         `).join("");
@@ -220,7 +228,9 @@
       setInterval(window.renderContinueWatching, 3000);
     }
 
-    // ─── Detail Page ───
+    // ═══════════════════════════════════════════
+    // DETAIL PAGE — DONO BUTTONS
+    // ═══════════════════════════════════════════
     window.loadAnimeDetail = function() {
       const params = new URLSearchParams(window.location.search);
       const id = params.get("id");
@@ -236,19 +246,52 @@
         const year = getYear(a);
         const genreList = getGenres(a).split(",").map(g => g.trim()).filter(Boolean);
 
+        // ═══ EPISODES WITH DONO BUTTONS ═══
         let episodesHTML = "";
         if (a.episodes) {
           const eps = Object.entries(a.episodes).sort((x,y) => x[1].number - y[1].number);
           episodesHTML = eps.map(([eid, ep]) => {
-            const link = ep.telegram || ep.link || ep.link2 || ep.link3 || "#";
-            const isExt = link !== "#";
+            const buttons = [];
+
+            // 📱 Telegram Button
+            if (ep.telegram) {
+              buttons.push(`
+                <a href="${ep.telegram}" target="_blank" rel="noopener" class="ep-action-btn tg">
+                  📱 Telegram
+                </a>
+              `);
+            }
+
+            // 🎬 Watch Online Button (if streaming link exists)
+            if (ep.streaming || ep.streaming2 || ep.streaming3 || ep.link) {
+              buttons.push(`
+                <a href="watch.html?anime=${id}&ep=${ep.number}" class="ep-action-btn stream">
+                  🎬 Watch Online
+                </a>
+              `);
+            }
+
+            // ⬇️ Download Button
+            if (ep.download) {
+              buttons.push(`
+                <a href="${ep.download}" target="_blank" rel="noopener" class="ep-action-btn dl">
+                  ⬇️ Download
+                </a>
+              `);
+            }
+
+            const btnHTML = buttons.length
+              ? `<div class="ep-actions">${buttons.join("")}</div>`
+              : '<p class="ep-no-link">⚠️ Koi link nahi hai</p>';
+
             return `
-              <a href="${link}" ${isExt?'target="_blank" rel="noopener"':''}
-                 class="episode-btn ${!isExt?'disabled':''}"
-                 ${!isExt?'onclick="event.preventDefault();alert(\'Link pending\')"':''}>
-                <strong>EP ${ep.number}: ${ep.title || "Episode " + ep.number}</strong>
-                <small>${ep.telegram ? '📱 Telegram' : (ep.link ? '▶ Watch' : '⚠️ Pending')}</small>
-              </a>
+              <div class="episode-card">
+                <div class="ep-header">
+                  <strong>EP ${ep.number}</strong>
+                  ${ep.title ? `<span>${ep.title}</span>` : ''}
+                </div>
+                ${btnHTML}
+              </div>
             `;
           }).join("");
         } else {
@@ -272,7 +315,7 @@
           </div>
           <div class="episodes-section">
             <h2>📺 Episodes</h2>
-            <div class="episode-grid">${episodesHTML}</div>
+            <div class="episode-grid-new">${episodesHTML}</div>
           </div>
         `;
       });
