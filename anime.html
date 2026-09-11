@@ -7,12 +7,14 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
-  <div class="header-inner">
-    <a href="index.html" class="logo">🔥 Toon<span>Flix</span> Hindi</a>
-    <nav>
-      <a href="index.html">← Home</a>
-    </nav>
+
+<header class="top-header">
+  <a href="index.html" class="logo">
+    <span class="logo-icon">🔥</span>
+    <span class="logo-text">Toon<span>Flix</span></span>
+  </a>
+  <div class="header-actions">
+    <a href="index.html" class="admin-btn">← Home</a>
   </div>
 </header>
 
@@ -20,15 +22,15 @@
   <!-- Dynamic Content -->
 </div>
 
-<footer>
-  <p>© 2025 ToonFlix Hindi</p>
+<footer class="premium-footer">
+  <div class="footer-logo">🔥 Toon<span>Flix</span> Hindi</div>
+  <p class="footer-copy">© 2025 ToonFlix Hindi — All Rights Reserved</p>
 </footer>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="analytics.js"></script>
 <script src="script.js"></script>
-<script>
-  loadAnimeDetail();
-</script>
+<script>loadAnimeDetail();</script>
 </body>
 </html>
