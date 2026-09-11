@@ -175,7 +175,7 @@ function renderContinueWatching() {
 
     section.style.display = "block";
     el.innerHTML = history.slice(0, 10).map(h => `
-      <div class="anime-card" onclick="location.href='watch.html?anime=${h.animeId}&ep=${h.epNumber}'">
+      <div class="anime-card" onclick="location.href='anime.html?id=${h.animeId}'">
         <img src="${h.poster || 'https://via.placeholder.com/300x400'}" onerror="this.src='https://via.placeholder.com/300x400'">
         <div class="card-info">
           <h3>${h.title}</h3>
@@ -213,16 +213,25 @@ function loadAnimeDetail() {
     const banner = a.banner || a.poster || "";
     const poster = a.poster || "https://via.placeholder.com/300x400";
 
-    // Episodes sorted by number
+    // ═══ Episodes — Telegram Direct ═══
     let episodesHTML = "";
     if (a.episodes) {
       const eps = Object.entries(a.episodes).sort((x,y) => x[1].number - y[1].number);
-      episodesHTML = eps.map(([eid, ep]) => `
-        <a href="watch.html?anime=${id}&ep=${ep.number}" class="episode-btn">
-          <strong>EP ${ep.number}: ${ep.title || "Episode " + ep.number}</strong>
-          <small>▶ Watch Now</small>
-        </a>
-      `).join("");
+      episodesHTML = eps.map(([eid, ep]) => {
+        // Priority: Telegram > Server 1 > Server 2 > Server 3
+        const episodeLink = ep.telegram || ep.link || ep.link2 || ep.link3 || "#";
+        const isExternal = episodeLink !== "#";
+        
+        return `
+          <a href="${episodeLink}" 
+             ${isExternal ? 'target="_blank" rel="noopener"' : ''}
+             class="episode-btn ${!isExternal ? 'disabled' : ''}"
+             ${!isExternal ? 'onclick="event.preventDefault();alert(\'Is episode ka link abhi add nahi hua\')"' : ''}>
+            <strong>EP ${ep.number}: ${ep.title || "Episode " + ep.number}</strong>
+            <small>${ep.telegram ? '📱 Telegram pe Watch' : (ep.link ? '▶ Watch Now' : '⚠️ Link pending')}</small>
+          </a>
+        `;
+      }).join("");
     } else {
       episodesHTML = "<p class='empty-msg'>No episodes added yet.</p>";
     }
