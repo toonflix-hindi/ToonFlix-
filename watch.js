@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════
-// TOONFLIX - WATCH PAGE LOGIC
+// TOONFLIX - WATCH PAGE (FIXED VERSION)
 // ═══════════════════════════════════════════
 
 const firebaseConfig = {
@@ -13,7 +13,6 @@ let currentAnime = null;
 let currentEpNum = 0;
 let allEpisodes = [];
 
-// ═══ BACK BUTTON ═══
 function goBack() {
   const params = new URLSearchParams(window.location.search);
   const animeId = params.get("anime");
@@ -24,9 +23,6 @@ function goBack() {
   }
 }
 
-// ═══════════════════════════════════════════
-// LOAD WATCH PAGE
-// ═══════════════════════════════════════════
 function loadWatchPage() {
   const params = new URLSearchParams(window.location.search);
   const animeId = params.get("anime");
@@ -34,9 +30,11 @@ function loadWatchPage() {
   const el = document.getElementById("watchContainer");
 
   if (!animeId) {
-    el.innerHTML = "<p class='empty-msg'>Anime not found.</p>";
+    el.innerHTML = "<p class='empty-msg'>Anime not found. URL me ?anime=ID hona chahiye.</p>";
     return;
   }
+
+  console.log("🎬 Loading watch page for:", animeId, "Episode:", epNum);
 
   animeRef.child(animeId).on("value", (snap) => {
     const a = snap.val();
@@ -47,21 +45,14 @@ function loadWatchPage() {
     currentAnime = { id: animeId, ...a };
     currentEpNum = epNum;
 
-    // Track episode play
-    if (typeof trackEpisodePlay === "function") {
-      const ep = a.episodes ? Object.values(a.episodes).find(e => e.number === epNum) : null;
-      if (ep) {
-        trackEpisodePlay(animeId, a.title || "Untitled", epNum);
-      }
-    }
-
-    // Episodes sort karo
     allEpisodes = [];
     if (a.episodes) {
       allEpisodes = Object.entries(a.episodes)
         .map(([eid, ep]) => ({ eid, ...ep }))
         .sort((x, y) => x.number - y.number);
     }
+
+    console.log("📺 Total episodes:", allEpisodes.length);
 
     const currentEp = allEpisodes.find(e => e.number === epNum);
 
@@ -76,46 +67,41 @@ function loadWatchPage() {
       return;
     }
 
-    // Progress save
     saveProgress(currentAnime, currentEp);
 
-    // Nav
     const idx = allEpisodes.findIndex(e => e.number === epNum);
     const prevEp = idx > 0 ? allEpisodes[idx - 1] : null;
     const nextEp = idx < allEpisodes.length - 1 ? allEpisodes[idx + 1] : null;
+
+    console.log("⏮️ Prev:", prevEp ? prevEp.number : "none", "⏭️ Next:", nextEp ? nextEp.number : "none");
 
     // Servers
     const servers = [];
     if (currentEp.streaming) servers.push({ name: "Server 1", link: currentEp.streaming });
     if (currentEp.streaming2) servers.push({ name: "Server 2", link: currentEp.streaming2 });
     if (currentEp.streaming3) servers.push({ name: "Server 3", link: currentEp.streaming3 });
-    // Fallback agar purane episode me `link` field ho
     if (!servers.length && currentEp.link && !currentEp.telegram) {
       servers.push({ name: "Server 1", link: currentEp.link });
     }
 
-    renderPlayer(a, currentEp, servers, prevEp, nextEp, idx);
+    renderPlayer(a, currentEp, servers, prevEp, nextEp, animeId);
   });
 }
 
-// ═══════════════════════════════════════════
-// RENDER PLAYER
-// ═══════════════════════════════════════════
-function renderPlayer(anime, ep, servers, prevEp, nextEp, idx) {
+function renderPlayer(anime, ep, servers, prevEp, nextEp, animeId) {
   const el = document.getElementById("watchContainer");
   const embedUrl = servers[0]?.link || "";
-
-  // Comments
   const comments = JSON.parse(localStorage.getItem(`comments_${anime.id}_${ep.number}`) || "[]");
 
+  // ⚠️ IMPORTANT: URL me anime ID encode karo
+  const safeAnimeId = encodeURIComponent(animeId);
+
   el.innerHTML = `
-    <!-- Player Header -->
     <div class="watch-header">
       <h1>${anime.title || "Untitled"}</h1>
       <p class="watch-ep-title">Episode ${ep.number}${ep.title ? ": " + ep.title : ""}</p>
     </div>
 
-    <!-- Video Player -->
     <div class="video-wrapper">
       ${embedUrl
         ? `<iframe src="${embedUrl}" allowfullscreen frameborder="0" allow="autoplay; encrypted-media; picture-in-picture"></iframe>`
@@ -123,7 +109,6 @@ function renderPlayer(anime, ep, servers, prevEp, nextEp, idx) {
       }
     </div>
 
-    <!-- Server Selector -->
     ${servers.length > 1 ? `
       <div class="server-selector">
         <p class="server-label">🎬 Streaming Servers:</p>
@@ -137,7 +122,6 @@ function renderPlayer(anime, ep, servers, prevEp, nextEp, idx) {
       </div>
     ` : ""}
 
-    <!-- Action Bar -->
     <div class="watch-actions">
       ${ep.telegram ? `
         <a href="${ep.telegram}" target="_blank" rel="noopener" class="watch-action-btn telegram">
@@ -154,7 +138,6 @@ function renderPlayer(anime, ep, servers, prevEp, nextEp, idx) {
       </button>
     </div>
 
-    <!-- Comments Section -->
     <div class="comments-section" id="commentsSection" style="display:none;">
       <h3>💬 Comments</h3>
       <div class="comment-form">
@@ -175,24 +158,22 @@ function renderPlayer(anime, ep, servers, prevEp, nextEp, idx) {
       </div>
     </div>
 
-    <!-- Next/Prev -->
     <div class="ep-nav">
       ${prevEp
-        ? `<a href="watch.html?anime=${anime.id}&ep=${prevEp.number}" class="ep-nav-btn">⏮️ EP ${prevEp.number}</a>`
+        ? `<a href="watch.html?anime=${safeAnimeId}&ep=${prevEp.number}" class="ep-nav-btn">⏮️ EP ${prevEp.number}</a>`
         : `<button class="ep-nav-btn disabled" disabled>⏮️ No Previous</button>`
       }
       ${nextEp
-        ? `<a href="watch.html?anime=${anime.id}&ep=${nextEp.number}" class="ep-nav-btn next">EP ${nextEp.number} ⏭️</a>`
+        ? `<a href="watch.html?anime=${safeAnimeId}&ep=${nextEp.number}" class="ep-nav-btn next">EP ${nextEp.number} ⏭️</a>`
         : `<button class="ep-nav-btn disabled" disabled>No Next ⏭️</button>`
       }
     </div>
 
-    <!-- All Episodes -->
     <div class="all-episodes-list">
       <h3>📺 Saare Episodes (${allEpisodes.length})</h3>
       <div class="ep-list-grid">
         ${allEpisodes.map(e => `
-          <a href="watch.html?anime=${anime.id}&ep=${e.number}"
+          <a href="watch.html?anime=${safeAnimeId}&ep=${e.number}"
              class="ep-list-btn ${e.number === ep.number ? 'active' : ''}">
             <span class="ep-num">${e.number}</span>
             <span class="ep-name">${e.title || "Episode " + e.number}</span>
@@ -202,9 +183,8 @@ function renderPlayer(anime, ep, servers, prevEp, nextEp, idx) {
       </div>
     </div>
 
-    <!-- Back to anime -->
     <div class="back-to-anime">
-      <a href="anime.html?id=${anime.id}" class="primary-btn" style="display:block;text-align:center;text-decoration:none;">
+      <a href="anime.html?id=${safeAnimeId}" class="primary-btn" style="display:block;text-align:center;text-decoration:none;">
         ← ${anime.title} - Full Details
       </a>
     </div>
@@ -213,7 +193,6 @@ function renderPlayer(anime, ep, servers, prevEp, nextEp, idx) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-// ═══ SWITCH SERVER ═══
 function switchServer(link, btn) {
   document.querySelectorAll(".server-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
@@ -221,7 +200,6 @@ function switchServer(link, btn) {
   if (iframe) iframe.src = link;
 }
 
-// ═══ COMMENTS ═══
 function toggleComments() {
   const s = document.getElementById("commentsSection");
   s.style.display = s.style.display === "none" ? "block" : "none";
@@ -237,12 +215,10 @@ function addComment() {
   const comments = JSON.parse(localStorage.getItem(key) || "[]");
   comments.unshift({ name, text, time: Date.now() });
   localStorage.setItem(key, JSON.stringify(comments.slice(0, 50)));
-
   document.getElementById("commentText").value = "";
   loadWatchPage();
 }
 
-// ═══ SAVE PROGRESS ═══
 function saveProgress(anime, ep) {
   try {
     const history = JSON.parse(localStorage.getItem("toonflix_history") || "[]");
@@ -259,7 +235,6 @@ function saveProgress(anime, ep) {
   } catch (e) { console.error(e); }
 }
 
-// ═══ TIME AGO ═══
 function timeAgo(ts) {
   const diff = Date.now() - ts;
   const min = Math.floor(diff / 60000);
@@ -271,5 +246,4 @@ function timeAgo(ts) {
   return `${day}d ago`;
 }
 
-// ═══ INIT ═══
 loadWatchPage();
