@@ -1,12 +1,12 @@
 /* ═══════════════════════════════════════════
-   TOONFLIX - PREMIUM DESIGN + PLAYER CSS
+   TOONFLIX HINDI - COMPLETE STYLESHEET
+   Premium Design + Player + Episode Cards
    ═══════════════════════════════════════════ */
 
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; -webkit-tap-highlight-color:transparent; }
 
 :root {
   --bg: #0a0612;
-  --bg-2: #14091f;
   --glass: rgba(26, 21, 40, 0.7);
   --glass-border: rgba(168, 85, 247, 0.15);
   --pink: #ff2d92;
