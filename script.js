@@ -1,3 +1,7 @@
+// ═══════════════════════════════════════════
+// TOONFLIX HINDI - MAIN SCRIPT
+// ═══════════════════════════════════════════
+
 const firebaseConfig = {
   databaseURL: "https://toonflix-wed-default-rtdb.firebaseio.com/"
 };
@@ -8,11 +12,15 @@ const animeRef = db.ref("anime");
 let allAnime = [];
 let currentGenre = "All";
 
+// ═══════════════════════════════════════════
+// HOME PAGE LOAD
+// ═══════════════════════════════════════════
 if (document.getElementById("allAnime")) {
   animeRef.on("value", (snapshot) => {
     const data = snapshot.val() || {};
     allAnime = Object.entries(data).map(([id, val]) => ({ id, ...val }));
 
+    // Sort by updatedAt (newest first)
     const sorted = [...allAnime].sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
 
     renderHero(sorted.slice(0, 5));
@@ -22,12 +30,16 @@ if (document.getElementById("allAnime")) {
     renderAllAnime(allAnime);
   });
 
+  // Search listeners
   document.getElementById("searchBtn").addEventListener("click", doSearch);
   document.getElementById("searchInput").addEventListener("keyup", (e) => {
     if (e.key === "Enter") doSearch();
   });
 }
 
+// ═══════════════════════════════════════════
+// SEARCH
+// ═══════════════════════════════════════════
 function doSearch() {
   const q = document.getElementById("searchInput").value.trim().toLowerCase();
   if (!q) { renderAllAnime(allAnime); return; }
@@ -36,6 +48,9 @@ function doSearch() {
   document.getElementById("all").scrollIntoView({ behavior: "smooth" });
 }
 
+// ═══════════════════════════════════════════
+// CARD HTML (Premium)
+// ═══════════════════════════════════════════
 function cardHTML(anime, showNew=false, rank=null) {
   const poster = anime.poster || "https://via.placeholder.com/300x400?text=No+Image";
   const isNew = showNew && (Date.now() - (anime.createdAt||0) < 7*24*60*60*1000);
@@ -52,37 +67,63 @@ function cardHTML(anime, showNew=false, rank=null) {
     </div>`;
 }
 
+// ═══════════════════════════════════════════
+// HERO SLIDER (Premium)
+// ═══════════════════════════════════════════
 function renderHero(list) {
   const el = document.getElementById("heroSlider");
   if (!el) return;
-  if (!list.length) { document.getElementById("heroSection").style.display="none"; return; }
+  if (!list.length) { 
+    document.getElementById("heroSection").style.display = "none"; 
+    return; 
+  }
   el.innerHTML = list.map(a => `
     <div class="hero-card" onclick="location.href='anime.html?id=${a.id}'">
       <img src="${a.banner || a.poster || ''}" onerror="this.src='https://via.placeholder.com/800x400'">
       <div class="hero-overlay">
+        <span class="hero-tag">🔥 TRENDING</span>
         <h3>${a.title || ''}</h3>
-        <p>${a.year||''} ${a.rating?'• ⭐ '+a.rating:''} ${a.genres?'• '+a.genres.split(",")[0].trim():''}</p>
+        <p>
+          ${a.year ? `<span>📅 ${a.year}</span>` : ''}
+          ${a.rating ? `<span>⭐ ${a.rating}</span>` : ''}
+          ${a.genres ? `<span>🎭 ${a.genres.split(",")[0].trim()}</span>` : ''}
+        </p>
         <span class="hero-play">▶ Watch Now</span>
       </div>
     </div>
   `).join("");
 }
 
+// ═══════════════════════════════════════════
+// NEWLY UPDATED ROW
+// ═══════════════════════════════════════════
 function renderNewlyUpdated(list) {
   const el = document.getElementById("newlyUpdated");
   if (!el) return;
-  if (!list.length) { el.innerHTML = '<p class="empty-msg" style="flex:0 0 100%">No anime added yet.</p>'; return; }
+  if (!list.length) { 
+    el.innerHTML = '<p class="empty-msg" style="flex:0 0 100%">No anime added yet.</p>'; 
+    return; 
+  }
   el.innerHTML = list.map(a => cardHTML(a, true)).join("");
 }
 
+// ═══════════════════════════════════════════
+// TOP 10 ROW
+// ═══════════════════════════════════════════
 function renderTop10(list) {
   const el = document.getElementById("top10Grid");
   if (!el) return;
   const sorted = list.sort((a,b) => (b.rating||0) - (a.rating||0)).slice(0,10);
-  if (!sorted.length) { el.innerHTML = '<p class="empty-msg" style="flex:0 0 100%">No Top 10 anime yet.</p>'; return; }
+  if (!sorted.length) { 
+    el.innerHTML = '<p class="empty-msg" style="flex:0 0 100%">No Top 10 anime yet.</p>'; 
+    return; 
+  }
   el.innerHTML = sorted.map((a,i) => cardHTML(a, false, i+1)).join("");
 }
 
+// ═══════════════════════════════════════════
+// GENRES
+// ═══════════════════════════════════════════
 function renderGenres() {
   const el = document.getElementById("genreBtns");
   if (!el) return;
@@ -104,14 +145,58 @@ function filterGenre(g, btn) {
   renderAllAnime(list);
 }
 
+// ═══════════════════════════════════════════
+// ALL ANIME GRID
+// ═══════════════════════════════════════════
 function renderAllAnime(list) {
   const el = document.getElementById("allAnime");
   if (!el) return;
-  if (!list.length) { el.innerHTML = '<p class="empty-msg">No anime found.</p>'; return; }
+  if (!list.length) { 
+    el.innerHTML = '<p class="empty-msg">No anime found.</p>'; 
+    return; 
+  }
   el.innerHTML = list.map(a => cardHTML(a, false)).join("");
 }
 
-// -------- Detail Page --------
+// ═══════════════════════════════════════════
+// CONTINUE WATCHING
+// ═══════════════════════════════════════════
+function renderContinueWatching() {
+  const section = document.getElementById("continueWatchingSection");
+  const el = document.getElementById("continueWatching");
+  if (!section || !el) return;
+
+  try {
+    const history = JSON.parse(localStorage.getItem("toonflix_history") || "[]");
+    if (!history.length) { 
+      section.style.display = "none"; 
+      return; 
+    }
+
+    section.style.display = "block";
+    el.innerHTML = history.slice(0, 10).map(h => `
+      <div class="anime-card" onclick="location.href='watch.html?anime=${h.animeId}&ep=${h.epNumber}'">
+        <img src="${h.poster || 'https://via.placeholder.com/300x400'}" onerror="this.src='https://via.placeholder.com/300x400'">
+        <div class="card-info">
+          <h3>${h.title}</h3>
+          <p>EP ${h.epNumber} ${h.epTitle ? "• " + h.epTitle : ""}</p>
+        </div>
+      </div>
+    `).join("");
+  } catch (e) { 
+    console.error("Continue watching error:", e); 
+  }
+}
+
+// Auto-load Continue Watching if section exists
+if (document.getElementById("continueWatching")) {
+  renderContinueWatching();
+  setInterval(renderContinueWatching, 3000);
+}
+
+// ═══════════════════════════════════════════
+// ANIME DETAIL PAGE
+// ═══════════════════════════════════════════
 function loadAnimeDetail() {
   const params = new URLSearchParams(window.location.search);
   const id = params.get("id");
@@ -120,16 +205,20 @@ function loadAnimeDetail() {
 
   animeRef.child(id).on("value", (snap) => {
     const a = snap.val();
-    if (!a) { el.innerHTML = "<p class='empty-msg'>Anime not found.</p>"; return; }
+    if (!a) { 
+      el.innerHTML = "<p class='empty-msg'>Anime not found.</p>"; 
+      return; 
+    }
 
     const banner = a.banner || a.poster || "";
     const poster = a.poster || "https://via.placeholder.com/300x400";
 
+    // Episodes sorted by number
     let episodesHTML = "";
     if (a.episodes) {
       const eps = Object.entries(a.episodes).sort((x,y) => x[1].number - y[1].number);
       episodesHTML = eps.map(([eid, ep]) => `
-        <a href="${ep.link}" target="_blank" class="episode-btn">
+        <a href="watch.html?anime=${id}&ep=${ep.number}" class="episode-btn">
           <strong>EP ${ep.number}: ${ep.title || "Episode " + ep.number}</strong>
           <small>▶ Watch Now</small>
         </a>
@@ -159,4 +248,9 @@ function loadAnimeDetail() {
       </div>
     `;
   });
+}
+
+// Auto-run detail loader if on anime page
+if (document.getElementById("detailContainer")) {
+  loadAnimeDetail();
 }
