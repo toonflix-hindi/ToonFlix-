@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════
-// TOONFLIX - WATCH PAGE (FIXED VERSION)
+// TOONFLIX - WATCH PAGE (MULTI-QUALITY)
 // ═══════════════════════════════════════════
 
 const firebaseConfig = {
@@ -16,11 +16,8 @@ let allEpisodes = [];
 function goBack() {
   const params = new URLSearchParams(window.location.search);
   const animeId = params.get("anime");
-  if (animeId) {
-    window.location.href = `anime.html?id=${animeId}`;
-  } else {
-    window.location.href = "index.html";
-  }
+  if (animeId) window.location.href = `anime.html?id=${animeId}`;
+  else window.location.href = "index.html";
 }
 
 function loadWatchPage() {
@@ -29,19 +26,12 @@ function loadWatchPage() {
   const epNum = parseInt(params.get("ep") || "1");
   const el = document.getElementById("watchContainer");
 
-  if (!animeId) {
-    el.innerHTML = "<p class='empty-msg'>Anime not found. URL me ?anime=ID hona chahiye.</p>";
-    return;
-  }
-
-  console.log("🎬 Loading watch page for:", animeId, "Episode:", epNum);
+  if (!animeId) { el.innerHTML = "<p class='empty-msg'>Anime not found.</p>"; return; }
 
   animeRef.child(animeId).on("value", (snap) => {
     const a = snap.val();
-    if (!a) {
-      el.innerHTML = "<p class='empty-msg'>Anime not found.</p>";
-      return;
-    }
+    if (!a) { el.innerHTML = "<p class='empty-msg'>Anime not found.</p>"; return; }
+    
     currentAnime = { id: animeId, ...a };
     currentEpNum = epNum;
 
@@ -52,18 +42,14 @@ function loadWatchPage() {
         .sort((x, y) => x.number - y.number);
     }
 
-    console.log("📺 Total episodes:", allEpisodes.length);
-
     const currentEp = allEpisodes.find(e => e.number === epNum);
-
     if (!currentEp) {
       el.innerHTML = `
         <div style="padding:40px 20px;text-align:center;">
           <h2 style="margin-bottom:12px;">${a.title}</h2>
           <p class="empty-msg" style="margin-bottom:20px;">Episode ${epNum} nahi mila.</p>
           <a href="anime.html?id=${animeId}" class="primary-btn" style="display:inline-block;padding:12px 24px;text-decoration:none;max-width:250px;">← Wapas</a>
-        </div>
-      `;
+        </div>`;
       return;
     }
 
@@ -73,28 +59,32 @@ function loadWatchPage() {
     const prevEp = idx > 0 ? allEpisodes[idx - 1] : null;
     const nextEp = idx < allEpisodes.length - 1 ? allEpisodes[idx + 1] : null;
 
-    console.log("⏮️ Prev:", prevEp ? prevEp.number : "none", "⏭️ Next:", nextEp ? nextEp.number : "none");
-
-    // Servers
+    // ═══ MULTI-QUALITY SERVERS ═══
     const servers = [];
-    if (currentEp.streaming) servers.push({ name: "Server 1", link: currentEp.streaming });
-    if (currentEp.streaming2) servers.push({ name: "Server 2", link: currentEp.streaming2 });
-    if (currentEp.streaming3) servers.push({ name: "Server 3", link: currentEp.streaming3 });
-    if (!servers.length && currentEp.link && !currentEp.telegram) {
-      servers.push({ name: "Server 1", link: currentEp.link });
+    
+    // New multi-quality format
+    if (currentEp.q480) servers.push({ name: "480p", link: currentEp.q480, icon: "📺" });
+    if (currentEp.q720) servers.push({ name: "720p", link: currentEp.q720, icon: "🎬" });
+    if (currentEp.q1080) servers.push({ name: "1080p", link: currentEp.q1080, icon: "💎" });
+    if (currentEp.q4k) servers.push({ name: "4K", link: currentEp.q4k, icon: "🎥" });
+    
+    // Legacy format fallback
+    if (!servers.length) {
+      if (currentEp.streaming) servers.push({ name: "Server 1", link: currentEp.streaming });
+      if (currentEp.streaming2) servers.push({ name: "Server 2", link: currentEp.streaming2 });
+      if (currentEp.streaming3) servers.push({ name: "Server 3", link: currentEp.streaming3 });
+      if (currentEp.link) servers.push({ name: "Server 1", link: currentEp.link });
     }
 
-    renderPlayer(a, currentEp, servers, prevEp, nextEp, animeId);
+    renderPlayer(a, currentEp, servers, prevEp, nextEp);
   });
 }
 
-function renderPlayer(anime, ep, servers, prevEp, nextEp, animeId) {
+function renderPlayer(anime, ep, servers, prevEp, nextEp) {
   const el = document.getElementById("watchContainer");
   const embedUrl = servers[0]?.link || "";
   const comments = JSON.parse(localStorage.getItem(`comments_${anime.id}_${ep.number}`) || "[]");
-
-  // ⚠️ IMPORTANT: URL me anime ID encode karo
-  const safeAnimeId = encodeURIComponent(animeId);
+  const safeAnimeId = encodeURIComponent(anime.id);
 
   el.innerHTML = `
     <div class="watch-header">
@@ -111,11 +101,11 @@ function renderPlayer(anime, ep, servers, prevEp, nextEp, animeId) {
 
     ${servers.length > 1 ? `
       <div class="server-selector">
-        <p class="server-label">🎬 Streaming Servers:</p>
+        <p class="server-label">🎬 Quality / Servers:</p>
         <div class="server-btns">
           ${servers.map((s, i) => `
             <button class="server-btn ${i === 0 ? 'active' : ''}" onclick="switchServer('${s.link}', this)">
-              ${s.name}
+              ${s.icon || "🎬"} ${s.name}
             </button>
           `).join("")}
         </div>
@@ -123,19 +113,9 @@ function renderPlayer(anime, ep, servers, prevEp, nextEp, animeId) {
     ` : ""}
 
     <div class="watch-actions">
-      ${ep.telegram ? `
-        <a href="${ep.telegram}" target="_blank" rel="noopener" class="watch-action-btn telegram">
-          📱 Telegram
-        </a>
-      ` : ""}
-      ${ep.download ? `
-        <a href="${ep.download}" target="_blank" rel="noopener" class="watch-action-btn download">
-          ⬇️ Download
-        </a>
-      ` : ""}
-      <button class="watch-action-btn comment" onclick="toggleComments()">
-        💬 Comments (${comments.length})
-      </button>
+      ${ep.telegram ? `<a href="${ep.telegram}" target="_blank" rel="noopener" class="watch-action-btn telegram">📱 Telegram</a>` : ""}
+      ${ep.download ? `<a href="${ep.download}" target="_blank" rel="noopener" class="watch-action-btn download">⬇️ Download</a>` : ""}
+      <button class="watch-action-btn comment" onclick="toggleComments()">💬 Comments (${comments.length})</button>
     </div>
 
     <div class="comments-section" id="commentsSection" style="display:none;">
@@ -189,7 +169,6 @@ function renderPlayer(anime, ep, servers, prevEp, nextEp, animeId) {
       </a>
     </div>
   `;
-
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -210,7 +189,6 @@ function addComment() {
   const name = document.getElementById("commentName").value.trim() || "Anonymous";
   const text = document.getElementById("commentText").value.trim();
   if (!text) { alert("Comment likho!"); return; }
-
   const key = `comments_${currentAnime.id}_${currentEpNum}`;
   const comments = JSON.parse(localStorage.getItem(key) || "[]");
   comments.unshift({ name, text, time: Date.now() });
@@ -232,7 +210,7 @@ function saveProgress(anime, ep) {
       timestamp: Date.now()
     });
     localStorage.setItem("toonflix_history", JSON.stringify(filtered.slice(0, 20)));
-  } catch (e) { console.error(e); }
+  } catch (e) {}
 }
 
 function timeAgo(ts) {
@@ -242,8 +220,7 @@ function timeAgo(ts) {
   if (min < 60) return `${min}m ago`;
   const hr = Math.floor(min / 60);
   if (hr < 24) return `${hr}h ago`;
-  const day = Math.floor(hr / 24);
-  return `${day}d ago`;
+  return `${Math.floor(hr / 24)}d ago`;
 }
 
 loadWatchPage();
