@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════
-// TOONFLIX ADMIN - SMART EPISODE MANAGER
+// TOONFLIX ADMIN PANEL - COMPLETE
 // ═══════════════════════════════════════════
 
 const firebaseConfig = {
@@ -13,7 +13,143 @@ let allAnime = [];
 let currentEditId = null;
 
 // ═══════════════════════════════════════════
-// LOAD ALL ANIME
+// MYANIMELIST (JIKAN API) SEARCH
+// ═══════════════════════════════════════════
+const JIKAN_URL = "https://api.jikan.moe/v4/anime";
+
+function searchMAL() {
+  const input = document.getElementById("malSearchInput");
+  const results = document.getElementById("malResults");
+  const loading = document.getElementById("malLoading");
+  const query = input.value.trim();
+
+  if (!query) {
+    results.innerHTML = '<p class="empty-msg">⚠️ Anime ka naam likhein</p>';
+    return;
+  }
+
+  results.innerHTML = "";
+  loading.style.display = "block";
+
+  fetch(`${JIKAN_URL}?q=${encodeURIComponent(query)}&limit=12&sfw=true`)
+    .then(res => {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    })
+    .then(data => {
+      loading.style.display = "none";
+      const list = data?.data || [];
+      renderMALResults(list);
+    })
+    .catch(err => {
+      console.error("Jikan error:", err);
+      loading.style.display = "none";
+      results.innerHTML = '<p class="empty-msg">❌ MyAnimeList se connect nahi ho paya. 1 minute baad try karo.</p>';
+    });
+}
+
+function renderMALResults(list) {
+  const el = document.getElementById("malResults");
+
+  if (!list.length) {
+    el.innerHTML = '<p class="empty-msg">❌ Koi match nahi mila. Spelling check karo.</p>';
+    return;
+  }
+
+  el.innerHTML = `
+    <p class="search-hint-text">✅ ${list.length} results — Jo anime add karna hai uska <strong>Add</strong> button click karo</p>
+    <div class="anilist-grid">
+      ${list.map((m, i) => {
+        const title = m.title_english || m.title || "Untitled";
+        const year = m.year || (m.aired?.prop?.from?.year) || "";
+        const rating = m.score ? m.score.toFixed(1) : "";
+        const genre = (m.genres || []).slice(0, 2).map(g => g.name).join(", ");
+        const episodes = m.episodes || "";
+        const type = m.type || "TV";
+        const poster = m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || "";
+        const malId = m.mal_id;
+
+        return `
+          <div class="anilist-card">
+            <div class="anilist-poster">
+              <img src="${poster}" alt="${title}" onerror="this.src='https://via.placeholder.com/300x400'">
+              ${rating ? `<span class="anilist-rating">⭐ ${rating}</span>` : ''}
+            </div>
+            <div class="anilist-info">
+              <h4>${title}</h4>
+              <div class="anilist-meta">
+                ${year ? `<span>📅 ${year}</span>` : ''}
+                ${episodes ? `<span>🎬 ${episodes} eps</span>` : ''}
+                ${type ? `<span>📺 ${type}</span>` : ''}
+              </div>
+              <p class="anilist-genre">${genre}</p>
+              <button 
+                class="primary-btn anilist-add-btn" 
+                data-mal-id="${malId}"
+                onclick="addFromMAL(${malId}, this)"
+              >
+                ➕ Add to Library
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function addFromMAL(malId, btn) {
+  btn.disabled = true;
+  btn.textContent = "⏳ Fetching details...";
+
+  fetch(`${JIKAN_URL}/${malId}/full`)
+    .then(res => res.json())
+    .then(data => {
+      const m = data?.data;
+      if (!m) throw new Error("Anime not found");
+
+      const title = m.title_english || m.title || "Untitled";
+      const year = m.year || (m.aired?.prop?.from?.year ? String(m.aired.prop.from.year) : "");
+      const rating = m.score ? m.score.toFixed(1) : "";
+      const genres = (m.genres || []).map(g => g.name).join(", ");
+      const episodes = m.episodes ? String(m.episodes) : "";
+      const desc = m.synopsis ? m.synopsis.slice(0, 800) : "";
+      const poster = m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || "";
+      const banner = m.trailer?.images?.maximum_image_url || "";
+      const type = m.type || "TV";
+
+      const payload = {
+        title,
+        poster,
+        banner,
+        year,
+        rating,
+        genres,
+        totalEpisodes: episodes,
+        description: desc,
+        format: type,
+        malId: malId,
+        top10: false,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+
+      return animeRef.push(payload).then(() => {
+        btn.textContent = "✅ Added!";
+        btn.style.background = "linear-gradient(135deg, #10b981, #059669)";
+        showToast(`✅ "${title}" added!`);
+      });
+    })
+    .catch(err => {
+      console.error("Add error:", err);
+      btn.disabled = false;
+      btn.textContent = "❌ Retry";
+      alert("Error: " + err.message);
+    });
+}
+
+// ═══════════════════════════════════════════
+// LOAD ALL ANIME (Real-time)
 // ═══════════════════════════════════════════
 animeRef.on("value", (snap) => {
   const data = snap.val() || {};
@@ -22,7 +158,7 @@ animeRef.on("value", (snap) => {
 });
 
 // ═══════════════════════════════════════════
-// SAVE ANIME
+// SAVE ANIME (Manual)
 // ═══════════════════════════════════════════
 function saveAnime() {
   const title = document.getElementById("aTitle").value.trim();
@@ -44,13 +180,13 @@ function saveAnime() {
 
   if (currentEditId) {
     animeRef.child(currentEditId).update(anime).then(() => {
-      alert("✅ Updated successfully!");
+      alert("✅ Updated!");
       resetAnimeForm();
     });
   } else {
     anime.createdAt = Date.now();
     animeRef.push(anime).then(() => {
-      alert("✅ Anime added successfully!");
+      alert("✅ Anime added!");
       resetAnimeForm();
     });
   }
@@ -178,7 +314,7 @@ function loadEpisodes(id) {
 }
 
 // ═══════════════════════════════════════════
-// MULTI-QUALITY EPISODE ADD (MAIN FEATURE)
+// MULTI-QUALITY EPISODE ADD
 // ═══════════════════════════════════════════
 function addMultiQualityEpisode() {
   if (!currentEditId) { alert("Pehle anime select karein."); return; }
@@ -193,43 +329,31 @@ function addMultiQualityEpisode() {
   const download = document.getElementById("mqDownload").value.trim();
   const thumb = document.getElementById("mqThumb").value.trim();
 
-  if (!num) {
-    alert("Episode Number zaroori hai!");
-    return;
-  }
+  if (!num) { alert("Episode Number zaroori hai!"); return; }
 
   if (!q480 && !q720 && !q1080 && !q4k && !telegram) {
-    alert("Kam se kam ek link daalo (480p, 720p, 1080p, 4K ya Telegram)!");
+    alert("Kam se kam ek link daalo!");
     return;
   }
 
   const payload = {
     number: parseInt(num),
     title: title,
-    
-    // Multi-quality links
     q480: q480,
     q720: q720,
     q1080: q1080,
     q4k: q4k,
-    
-    // Legacy fields (first available quality as default)
     streaming: q480 || q720 || q1080 || q4k || "",
     streaming2: q720 && q480 ? q720 : "",
     streaming3: q1080 && q480 ? q1080 : "",
-    
-    // Extras
     telegram: telegram,
     download: download,
     thumb: thumb,
-    
     createdAt: Date.now()
   };
 
   animeRef.child(currentEditId).child("episodes").push(payload).then(() => {
     showToast("✅ Episode added with all qualities!");
-    
-    // Clear form
     ["mqNumber","mqTitle","mq480","mq720","mq1080","mq4k","mqTelegram","mqDownload","mqThumb"].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = "";
@@ -251,7 +375,6 @@ function addSingleEpisode() {
   if (!num) { alert("Episode Number zaroori hai!"); return; }
   if (!link) { alert("Link zaroori hai!"); return; }
 
-  // Auto-detect link type
   const isTelegram = link.includes("t.me");
   const isDownload = link.includes("download") || link.includes("drive");
 
@@ -292,7 +415,6 @@ function addBatchEpisodes() {
   lines.forEach((line, idx) => {
     const parts = line.split("|").map(p => p.trim());
     const num = parts[0];
-    
     if (!num) { errors++; return; }
 
     const payload = {
