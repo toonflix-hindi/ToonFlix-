@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════
-// TOONFLIX - ADMIN PANEL LOGIC
+// TOONFLIX ADMIN - SMART EPISODE MANAGER
 // ═══════════════════════════════════════════
 
 const firebaseConfig = {
@@ -45,24 +45,24 @@ function saveAnime() {
   if (currentEditId) {
     animeRef.child(currentEditId).update(anime).then(() => {
       alert("✅ Updated successfully!");
-      resetForm();
-    }).catch(e => alert("❌ Error: " + e.message));
+      resetAnimeForm();
+    });
   } else {
     anime.createdAt = Date.now();
     animeRef.push(anime).then(() => {
       alert("✅ Anime added successfully!");
-      resetForm();
-    }).catch(e => alert("❌ Error: " + e.message));
+      resetAnimeForm();
+    });
   }
 }
 
-function resetForm() {
+function resetAnimeForm() {
   ["aTitle","aPoster","aBanner","aYear","aRating","aGenres","aEpisodes","aDesc"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = "";
   });
-  const t10 = document.getElementById("aTop10");
-  if (t10) t10.checked = false;
+  const t = document.getElementById("aTop10");
+  if (t) t.checked = false;
   currentEditId = null;
 }
 
@@ -73,18 +73,21 @@ function renderAdminList(list) {
   const el = document.getElementById("adminList");
   if (!el) return;
   if (!list.length) { el.innerHTML = '<p class="empty-msg">No anime yet.</p>'; return; }
-  el.innerHTML = list.map(a => `
-    <div class="admin-list-item">
-      <img src="${a.poster||''}" onerror="this.src='https://via.placeholder.com/50x65'">
-      <div class="info">
-        <strong>${a.title||'Untitled'}</strong>
-        <small>${a.year||''} ${a.rating?'⭐'+a.rating:''} • ${a.episodes?Object.keys(a.episodes).length:0} eps</small>
+  el.innerHTML = list.map(a => {
+    const epCount = a.episodes ? Object.keys(a.episodes).length : 0;
+    return `
+      <div class="admin-list-item">
+        <img src="${a.poster||''}" onerror="this.src='https://via.placeholder.com/50x65'">
+        <div class="info">
+          <strong>${a.title||'Untitled'}</strong>
+          <small>${a.year||''} ${a.rating?'⭐'+a.rating:''} • ${epCount} eps</small>
+        </div>
+        <button class="btn-edit" onclick="editAnime('${a.id}')">Edit</button>
+        <button class="btn-episodes" onclick="openEpisodes('${a.id}','${(a.title||'').replace(/'/g,"\\'")}')">Eps</button>
+        <button class="btn-delete" onclick="deleteAnime('${a.id}','${(a.title||'').replace(/'/g,"\\'")}')">Del</button>
       </div>
-      <button class="btn-edit" onclick="editAnime('${a.id}')">Edit</button>
-      <button class="btn-episodes" onclick="openEpisodes('${a.id}','${(a.title||'').replace(/'/g,"\\'")}')">Eps</button>
-      <button class="btn-delete" onclick="deleteAnime('${a.id}','${(a.title||'').replace(/'/g,"\\'")}')">Del</button>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 }
 
 function editAnime(id) {
@@ -118,10 +121,7 @@ if (adminSearchInput) {
     const results = document.getElementById("adminSearchResults");
     if (!q) { results.innerHTML = ""; return; }
     const filtered = allAnime.filter(a => (a.title||"").toLowerCase().includes(q));
-    if (!filtered.length) {
-      results.innerHTML = '<p class="empty-msg">No match.</p>';
-      return;
-    }
+    if (!filtered.length) { results.innerHTML = '<p class="empty-msg">No match.</p>'; return; }
     results.innerHTML = filtered.map(a => `
       <div class="anime-card" onclick="editAnime('${a.id}')">
         <img src="${a.poster||''}" onerror="this.src='https://via.placeholder.com/300x400'">
@@ -149,87 +149,196 @@ function loadEpisodes(id) {
     const list = Object.entries(eps).sort((a,b) => a[1].number - b[1].number);
     const el = document.getElementById("episodeList");
     if (!list.length) { el.innerHTML = '<p class="empty-msg">No episodes yet.</p>'; return; }
-    el.innerHTML = list.map(([eid, ep]) => {
-      const tags = [];
-      if (ep.telegram) tags.push('📱 TG');
-      if (ep.streaming || ep.link) tags.push('🎬 Stream');
-      if (ep.streaming2) tags.push('S2');
-      if (ep.streaming3) tags.push('S3');
-      if (ep.download) tags.push('⬇️ DL');
-      return `
-        <div class="admin-list-item">
-          <div class="info">
-            <strong>EP ${ep.number}: ${ep.title||""}</strong>
-            <small>${tags.join(' • ') || 'No links'}</small>
-          </div>
-          <button class="btn-delete" onclick="deleteEpisode('${eid}')">Del</button>
-        </div>
-      `;
-    }).join("");
+    
+    el.innerHTML = `
+      <div style="margin-top:20px;">
+        <h3 style="color:#d8b4fe;font-size:1rem;margin-bottom:12px;">📺 Episodes (${list.length})</h3>
+        ${list.map(([eid, ep]) => {
+          const qualities = [];
+          if (ep.q480) qualities.push('480p');
+          if (ep.q720) qualities.push('720p');
+          if (ep.q1080) qualities.push('1080p');
+          if (ep.q4k) qualities.push('4K');
+          if (ep.streaming) qualities.push('S1');
+          if (ep.telegram) qualities.push('📱');
+          if (ep.download) qualities.push('⬇️');
+          return `
+            <div class="admin-list-item">
+              <div class="info">
+                <strong>EP ${ep.number}: ${ep.title || ''}</strong>
+                <small>${qualities.join(' • ') || 'No links'}</small>
+              </div>
+              <button class="btn-delete" onclick="deleteEpisode('${eid}')">Del</button>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
   });
 }
 
 // ═══════════════════════════════════════════
-// ADD EPISODE — FIXED VALIDATION
+// MULTI-QUALITY EPISODE ADD (MAIN FEATURE)
 // ═══════════════════════════════════════════
-function addEpisode() {
+function addMultiQualityEpisode() {
   if (!currentEditId) { alert("Pehle anime select karein."); return; }
 
-  const num = document.getElementById("epNumber").value;
-  const title = document.getElementById("epTitle").value.trim();
+  const num = document.getElementById("mqNumber").value;
+  const title = document.getElementById("mqTitle").value.trim();
+  const q480 = document.getElementById("mq480").value.trim();
+  const q720 = document.getElementById("mq720").value.trim();
+  const q1080 = document.getElementById("mq1080").value.trim();
+  const q4k = document.getElementById("mq4k").value.trim();
+  const telegram = document.getElementById("mqTelegram").value.trim();
+  const download = document.getElementById("mqDownload").value.trim();
+  const thumb = document.getElementById("mqThumb").value.trim();
 
-  // Ye fields optional hain — jo bhi mile
-  const epLink = document.getElementById("epLink");
-  const epLink2 = document.getElementById("epLink2");
-  const epLink3 = document.getElementById("epLink3");
-  const epTelegram = document.getElementById("epTelegram");
-  const epDownload = document.getElementById("epDownload");
-  const epThumb = document.getElementById("epThumb");
-
-  const link = epLink ? epLink.value.trim() : "";
-  const link2 = epLink2 ? epLink2.value.trim() : "";
-  const link3 = epLink3 ? epLink3.value.trim() : "";
-  const telegram = epTelegram ? epTelegram.value.trim() : "";
-  const download = epDownload ? epDownload.value.trim() : "";
-  const thumb = epThumb ? epThumb.value.trim() : "";
-
-  // ⚠️ FIXED: Sirf episode number zaroori hai
   if (!num) {
-    alert("Episode number zaroori hai!");
+    alert("Episode Number zaroori hai!");
     return;
   }
 
-  // ⚠️ FIXED: Kam se kam EK link hona chahiye (Telegram YA Streaming)
-  if (!link && !link2 && !link3 && !telegram) {
-    alert("Kam se kam ek link daalo:\n• 📱 Telegram Link\n• 🎬 Streaming Server 1\n• 🎬 Streaming Server 2\n• 🎬 Streaming Server 3");
+  if (!q480 && !q720 && !q1080 && !q4k && !telegram) {
+    alert("Kam se kam ek link daalo (480p, 720p, 1080p, 4K ya Telegram)!");
     return;
   }
 
   const payload = {
     number: parseInt(num),
     title: title,
-    link: link,
-    link2: link2,
-    link3: link3,
-    streaming: link,
-    streaming2: link2,
-    streaming3: link3,
+    
+    // Multi-quality links
+    q480: q480,
+    q720: q720,
+    q1080: q1080,
+    q4k: q4k,
+    
+    // Legacy fields (first available quality as default)
+    streaming: q480 || q720 || q1080 || q4k || "",
+    streaming2: q720 && q480 ? q720 : "",
+    streaming3: q1080 && q480 ? q1080 : "",
+    
+    // Extras
     telegram: telegram,
     download: download,
     thumb: thumb,
+    
     createdAt: Date.now()
   };
 
   animeRef.child(currentEditId).child("episodes").push(payload).then(() => {
-    alert("✅ Episode added!");
-    ["epNumber","epTitle","epLink","epLink2","epLink3","epTelegram","epDownload","epThumb"].forEach(id => {
+    showToast("✅ Episode added with all qualities!");
+    
+    // Clear form
+    ["mqNumber","mqTitle","mq480","mq720","mq1080","mq4k","mqTelegram","mqDownload","mqThumb"].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = "";
     });
   }).catch(e => alert("❌ Error: " + e.message));
 }
 
+// ═══════════════════════════════════════════
+// SINGLE EPISODE ADD
+// ═══════════════════════════════════════════
+function addSingleEpisode() {
+  if (!currentEditId) { alert("Pehle anime select karein."); return; }
+
+  const num = document.getElementById("slNumber").value;
+  const title = document.getElementById("slTitle").value.trim();
+  const link = document.getElementById("slLink").value.trim();
+  const thumb = document.getElementById("slThumb").value.trim();
+
+  if (!num) { alert("Episode Number zaroori hai!"); return; }
+  if (!link) { alert("Link zaroori hai!"); return; }
+
+  // Auto-detect link type
+  const isTelegram = link.includes("t.me");
+  const isDownload = link.includes("download") || link.includes("drive");
+
+  const payload = {
+    number: parseInt(num),
+    title: title,
+    telegram: isTelegram ? link : "",
+    download: isDownload ? link : "",
+    streaming: !isTelegram && !isDownload ? link : "",
+    thumb: thumb,
+    createdAt: Date.now()
+  };
+
+  animeRef.child(currentEditId).child("episodes").push(payload).then(() => {
+    showToast("✅ Episode added!");
+    ["slNumber","slTitle","slLink","slThumb"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = "";
+    });
+  });
+}
+
+// ═══════════════════════════════════════════
+// BATCH EPISODE ADD
+// ═══════════════════════════════════════════
+function addBatchEpisodes() {
+  if (!currentEditId) { alert("Pehle anime select karein."); return; }
+
+  const input = document.getElementById("batchInput").value.trim();
+  if (!input) { alert("Episodes data daalo!"); return; }
+
+  const lines = input.split("\n").map(l => l.trim()).filter(Boolean);
+  if (!lines.length) { alert("Koi valid line nahi mili!"); return; }
+
+  let added = 0;
+  let errors = 0;
+
+  lines.forEach((line, idx) => {
+    const parts = line.split("|").map(p => p.trim());
+    const num = parts[0];
+    
+    if (!num) { errors++; return; }
+
+    const payload = {
+      number: parseInt(num),
+      title: parts[5] || "",
+      q480: parts[1] || "",
+      q720: parts[2] || "",
+      q1080: parts[3] || "",
+      telegram: parts[4] || "",
+      streaming: parts[1] || "",
+      streaming2: parts[2] || "",
+      streaming3: parts[3] || "",
+      createdAt: Date.now() + idx
+    };
+
+    animeRef.child(currentEditId).child("episodes").push(payload)
+      .then(() => { added++; })
+      .catch(() => { errors++; });
+  });
+
+  setTimeout(() => {
+    showToast(`✅ ${added} episodes added! ${errors ? `(${errors} failed)` : ""}`);
+    document.getElementById("batchInput").value = "";
+  }, 1500);
+}
+
+// ═══════════════════════════════════════════
 function deleteEpisode(eid) {
   if (!confirm("Episode delete karein?")) return;
-  animeRef.child(currentEditId).child("episodes").child(eid).remove();
+  animeRef.child(currentEditId).child("episodes").child(eid).remove().then(() => {
+    showToast("🗑️ Episode deleted");
+  });
+}
+
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+function showToast(msg) {
+  let toast = document.getElementById("toonToast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "toonToast";
+    toast.className = "toon-toast";
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 2500);
 }
