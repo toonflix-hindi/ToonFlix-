@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Panel - ToonFlix</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <script>
-  // 🔐 Login check — agar login nahi hai toh login page bhej do
   if (sessionStorage.getItem("toonflix_admin") !== "true" &&
       localStorage.getItem("toonflix_admin") !== "true") {
     window.location.replace("login.html");
@@ -30,7 +30,7 @@
 
 <div class="admin-container">
 
-  <!-- Add Anime Form -->
+  <!-- ═══ ADD ANIME ═══ -->
   <section class="admin-section">
     <h2>➕ Add / Update Anime</h2>
     <div class="form-grid">
@@ -49,33 +49,116 @@
     </div>
   </section>
 
-  <!-- Search Existing Anime -->
+  <!-- ═══ SEARCH ANIME ═══ -->
   <section class="admin-section">
-    <h2>🔍 Search Existing Anime (Update karne ke liye)</h2>
+    <h2>🔍 Search Existing Anime</h2>
     <input id="adminSearch" placeholder="Type anime name..." style="width:100%;padding:13px 15px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:#0f0f1a;color:#fff;font-family:inherit;font-size:0.9rem;outline:none;">
     <div class="cards-grid" id="adminSearchResults" style="margin-top:15px;"></div>
   </section>
 
-  <!-- All Anime Manager -->
+  <!-- ═══ ALL ANIME ═══ -->
   <section class="admin-section">
     <h2>📚 All Anime (Delete / Edit)</h2>
     <div class="admin-list" id="adminList"></div>
   </section>
 
-  <!-- Add Episode -->
+  <!-- ═══ EPISODE SECTION ═══ -->
   <section class="admin-section" id="episodeSection" style="display:none;">
-    <h2>🎬 Add Episodes to: <span id="currentAnimeName"></span></h2>
-    <div class="form-grid">
-      <input id="epNumber" placeholder="Episode Number *" type="number">
-      <input id="epTitle" placeholder="Episode Title (optional)">
-      <input id="epLink" placeholder="🎬 Server 1 URL (Main) *">
-      <input id="epLink2" placeholder="🎬 Server 2 URL (Backup - optional)">
-      <input id="epLink3" placeholder="🎬 Server 3 URL (optional)">
-      <input id="epTelegram" placeholder="📱 Telegram Link (channel/group/post URL)">
-      <input id="epThumb" placeholder="Thumbnail URL (optional)">
-      <button class="primary-btn" onclick="addEpisode()">➕ Add Episode</button>
+    <h2>🎬 Add Episodes to: <span id="currentAnimeName" style="color:#d8b4fe;"></span></h2>
+
+    <!-- ═══ MODE TABS ═══ -->
+    <div class="admin-mode-tabs">
+      <button class="admin-mode-tab active" data-mode="multiquality" onclick="switchAdminMode('multiquality', this)">
+        🎯 Multi-Quality (RECOMMENDED)
+      </button>
+      <button class="admin-mode-tab" data-mode="single" onclick="switchAdminMode('single', this)">
+        📺 Single Link
+      </button>
+      <button class="admin-mode-tab" data-mode="batch" onclick="switchAdminMode('batch', this)">
+        ⚡ Batch Add
+      </button>
     </div>
-    <div id="episodeList" style="margin-top:15px;"></div>
+
+    <!-- ═══ MULTI-QUALITY MODE (Default) ═══ -->
+    <div class="admin-mode-content active" id="mode-multiquality">
+      <div class="mode-hint">
+        <strong>🎯 Smart Mode:</strong> Ek hi baar me saari qualities add karo — automatic save hoga. Bas jo qualities available hain wo bharo, baaki khaali chhodo.
+      </div>
+      
+      <div class="form-grid">
+        <input id="mqNumber" placeholder="Episode Number * (e.g. 1, 2, 3)" type="number">
+        <input id="mqTitle" placeholder="Episode Title (optional) — e.g. The Beginning">
+        
+        <div class="quality-input-wrap">
+          <label class="quality-label">📺 480p Link</label>
+          <input id="mq480" placeholder="https://... (480p quality)">
+        </div>
+        
+        <div class="quality-input-wrap">
+          <label class="quality-label">🎬 720p Link</label>
+          <input id="mq720" placeholder="https://... (720p quality)">
+        </div>
+        
+        <div class="quality-input-wrap">
+          <label class="quality-label">💎 1080p Link</label>
+          <input id="mq1080" placeholder="https://... (1080p quality)">
+        </div>
+        
+        <div class="quality-input-wrap">
+          <label class="quality-label">🎥 2160p / 4K Link (optional)</label>
+          <input id="mq4k" placeholder="https://... (4K quality)">
+        </div>
+        
+        <div class="quality-input-wrap">
+          <label class="quality-label">📱 Telegram Link</label>
+          <input id="mqTelegram" placeholder="https://t.me/... (all episodes)">
+        </div>
+        
+        <div class="quality-input-wrap">
+          <label class="quality-label">⬇️ Download Link (all qualities)</label>
+          <input id="mqDownload" placeholder="https://... (download page)">
+        </div>
+        
+        <div class="quality-input-wrap">
+          <label class="quality-label">🖼️ Thumbnail URL (optional)</label>
+          <input id="mqThumb" placeholder="https://... (image)">
+        </div>
+        
+        <button class="primary-btn" onclick="addMultiQualityEpisode()">⚡ Add Episode (All Qualities)</button>
+      </div>
+    </div>
+
+    <!-- ═══ SINGLE LINK MODE ═══ -->
+    <div class="admin-mode-content" id="mode-single">
+      <div class="mode-hint">
+        <strong>📺 Single Mode:</strong> Agar aapke paas sirf ek hi link hai (jaise Telegram link).
+      </div>
+      
+      <div class="form-grid">
+        <input id="slNumber" placeholder="Episode Number *" type="number">
+        <input id="slTitle" placeholder="Episode Title (optional)">
+        <input id="slLink" placeholder="🎬 Single Link (Telegram/Streaming/Download)">
+        <input id="slThumb" placeholder="Thumbnail URL (optional)">
+        <button class="primary-btn" onclick="addSingleEpisode()">➕ Add Episode</button>
+      </div>
+    </div>
+
+    <!-- ═══ BATCH MODE ═══ -->
+    <div class="admin-mode-content" id="mode-batch">
+      <div class="mode-hint">
+        <strong>⚡ Batch Mode:</strong> Ek saath 10-50 episodes add karo. Har line me ek episode. Format: <code>number|480p_link|720p_link|1080p_link|telegram_link</code>
+      </div>
+      
+      <div class="form-grid">
+        <textarea id="batchInput" placeholder="1|https://480p-link|https://720p-link|https://1080p-link|https://t.me/xxx
+2|https://480p-link|https://720p-link|https://1080p-link|https://t.me/xxx
+3|https://480p-link|https://720p-link|https://1080p-link|https://t.me/xxx" style="min-height:180px;font-family:monospace;font-size:0.8rem;"></textarea>
+        <button class="primary-btn" onclick="addBatchEpisodes()">⚡ Add All Episodes</button>
+      </div>
+    </div>
+
+    <!-- ═══ EPISODE LIST ═══ -->
+    <div id="episodeList" style="margin-top:20px;"></div>
   </section>
 
 </div>
@@ -94,6 +177,13 @@ function logout() {
   sessionStorage.removeItem("toonflix_admin");
   localStorage.removeItem("toonflix_admin");
   window.location.href = "login.html";
+}
+
+function switchAdminMode(mode, btn) {
+  document.querySelectorAll(".admin-mode-tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".admin-mode-content").forEach(c => c.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("mode-" + mode).classList.add("active");
 }
 </script>
 </body>
