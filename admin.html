@@ -30,9 +30,38 @@
 
 <div class="admin-container">
 
-  <!-- ═══ ADD ANIME ═══ -->
+  <!-- ═══ MYANIMELIST SEARCH (JIKAN API) ═══ -->
   <section class="admin-section">
-    <h2>➕ Add / Update Anime</h2>
+    <h2>🔍 Search Anime (MyAnimeList — Auto Fetch)</h2>
+    
+    <div class="search-panel-box">
+      <input 
+        id="malSearchInput" 
+        placeholder="Anime ka naam likhein... (jaise Naruto, One Piece, Attack on Titan)" 
+        autocomplete="off"
+        onkeyup="if(event.key==='Enter')searchMAL()"
+      >
+      <button class="primary-btn search-btn-inline" onclick="searchMAL()">
+        🔍 Search
+      </button>
+    </div>
+
+    <p class="search-hint-text">
+      💡 MyAnimeList se automatic poster, year, rating, genres, description sab aa jayega
+    </p>
+
+    <!-- Loading -->
+    <div id="malLoading" style="display:none;text-align:center;padding:20px;">
+      <p class="empty-msg">🔄 Searching MyAnimeList...</p>
+    </div>
+
+    <!-- Search Results -->
+    <div id="malResults" class="anilist-results"></div>
+  </section>
+
+  <!-- ═══ MANUAL ADD / EDIT ANIME ═══ -->
+  <section class="admin-section">
+    <h2>✏️ Manual Add / Edit Anime</h2>
     <div class="form-grid">
       <input id="aTitle" placeholder="Anime Title *">
       <input id="aPoster" placeholder="Poster Image URL *">
@@ -49,14 +78,14 @@
     </div>
   </section>
 
-  <!-- ═══ SEARCH ANIME ═══ -->
+  <!-- ═══ SEARCH EXISTING ANIME ═══ -->
   <section class="admin-section">
-    <h2>🔍 Search Existing Anime</h2>
+    <h2>🔍 Search Existing Anime (Update karne ke liye)</h2>
     <input id="adminSearch" placeholder="Type anime name..." style="width:100%;padding:13px 15px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:#0f0f1a;color:#fff;font-family:inherit;font-size:0.9rem;outline:none;">
     <div class="cards-grid" id="adminSearchResults" style="margin-top:15px;"></div>
   </section>
 
-  <!-- ═══ ALL ANIME ═══ -->
+  <!-- ═══ ALL ANIME MANAGER ═══ -->
   <section class="admin-section">
     <h2>📚 All Anime (Delete / Edit)</h2>
     <div class="admin-list" id="adminList"></div>
@@ -66,7 +95,7 @@
   <section class="admin-section" id="episodeSection" style="display:none;">
     <h2>🎬 Add Episodes to: <span id="currentAnimeName" style="color:#d8b4fe;"></span></h2>
 
-    <!-- ═══ MODE TABS ═══ -->
+    <!-- MODE TABS -->
     <div class="admin-mode-tabs">
       <button class="admin-mode-tab active" data-mode="multiquality" onclick="switchAdminMode('multiquality', this)">
         🎯 Multi-Quality (RECOMMENDED)
@@ -79,7 +108,7 @@
       </button>
     </div>
 
-    <!-- ═══ MULTI-QUALITY MODE (Default) ═══ -->
+    <!-- MULTI-QUALITY MODE -->
     <div class="admin-mode-content active" id="mode-multiquality">
       <div class="mode-hint">
         <strong>🎯 Smart Mode:</strong> Ek hi baar me saari qualities add karo — automatic save hoga. Bas jo qualities available hain wo bharo, baaki khaali chhodo.
@@ -128,7 +157,7 @@
       </div>
     </div>
 
-    <!-- ═══ SINGLE LINK MODE ═══ -->
+    <!-- SINGLE LINK MODE -->
     <div class="admin-mode-content" id="mode-single">
       <div class="mode-hint">
         <strong>📺 Single Mode:</strong> Agar aapke paas sirf ek hi link hai (jaise Telegram link).
@@ -143,7 +172,7 @@
       </div>
     </div>
 
-    <!-- ═══ BATCH MODE ═══ -->
+    <!-- BATCH MODE -->
     <div class="admin-mode-content" id="mode-batch">
       <div class="mode-hint">
         <strong>⚡ Batch Mode:</strong> Ek saath 10-50 episodes add karo. Har line me ek episode. Format: <code>number|480p_link|720p_link|1080p_link|telegram_link</code>
@@ -157,7 +186,7 @@
       </div>
     </div>
 
-    <!-- ═══ EPISODE LIST ═══ -->
+    <!-- EPISODE LIST -->
     <div id="episodeList" style="margin-top:20px;"></div>
   </section>
 
