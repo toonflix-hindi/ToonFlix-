@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile - ToonFlix</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top-header">
+  <a href="index.html" class="logo">
+    <span class="logo-icon">🔥</span>
+    <span class="logo-text">Toon<span>Flix</span></span>
+  </a>
+  <div class="header-actions">
+    <button class="icon-btn" onclick="goBack()">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+    </button>
+    <a href="login.html" class="admin-btn">Admin</a>
+  </div>
+</header>
+
+<div class="profile-container">
+
+  <!-- User Card -->
+  <div class="profile-card" id="profileCard">
+    <!-- Dynamic -->
+  </div>
+
+  <!-- Tabs -->
+  <div class="profile-tabs">
+    <button class="profile-tab active" data-tab="favorites">❤️ Favorites</button>
+    <button class="profile-tab" data-tab="rated">⭐ Rated</button>
+    <button class="profile-tab" data-tab="history">🕐 History</button>
+  </div>
+
+  <!-- Favorites -->
+  <div class="profile-tab-content active" id="tab-favorites">
+    <div class="cards-grid" id="favoritesGrid"></div>
+  </div>
+
+  <!-- Rated -->
+  <div class="profile-tab-content" id="tab-rated">
+    <div class="cards-grid" id="ratedGrid"></div>
+  </div>
+
+  <!-- History -->
+  <div class="profile-tab-content" id="tab-history">
+    <div class="cards-grid" id="historyGrid"></div>
+  </div>
+
+</div>
+
+<script>
+function goBack() { window.location.href = "index.html"; }
+</script>
+
+<script src="user.js"></script>
+<script src="i18n.js"></script>
+<script src="profile.js"></script>
+</body>
+</html>
