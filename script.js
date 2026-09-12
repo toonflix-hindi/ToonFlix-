@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════
-// TOONFLIX - SCRIPT.JS (ALL FEATURES)
+// TOONFLIX - SCRIPT.JS (FINAL FIXED)
 // ═══════════════════════════════════════════
 
 (function() {
@@ -35,21 +35,30 @@
       return m ? m[0] : a.year;
     }
     function esc(s) { return String(s || "").replace(/'/g, "\\'"); }
+    function safeId(id) { return encodeURIComponent(String(id)); }
 
-    // ═══ CARD HTML (with Heart Icon) ═══
+    // ═══ NAVIGATE TO ANIME ═══
+    window.goToAnime = function(id) {
+      console.log("🎬 Navigating to anime:", id);
+      window.location.href = "anime.html?id=" + encodeURIComponent(id);
+    };
+
+    // ═══ CARD HTML ═══
     function cardHTML(anime, showNew, rank) {
       const poster = anime.poster || "https://via.placeholder.com/300x400?text=No+Image";
       const isNew = showNew && (Date.now() - (anime.createdAt||0) < 7*24*60*60*1000);
       const year = getYear(anime);
       const genre = getGenres(anime).split(",")[0].trim();
       const isFav = window.ToonFav && ToonFav.isFav(anime.id);
+      const sid = safeId(anime.id);
 
       return `
-        <div class="anime-card ${rank?'top10-card':''}" onclick="location.href='anime.html?id=${anime.id}'">
+        <div class="anime-card ${rank?'top10-card':''}" data-id="${sid}">
           ${anime.rating ? `<span class="rating-badge">⭐ ${anime.rating}</span>` : ''}
           ${isNew ? '<span class="badge-new">NEW</span>' : ''}
           ${rank ? `<span class="top10-rank">${rank}</span>` : ''}
-          <button class="heart-btn ${isFav?'active':''}" onclick="event.stopPropagation();toggleFavCard(this,'${anime.id}')">
+          <button class="heart-btn ${isFav?'active':''}" 
+                  onclick="event.stopPropagation();toggleFavCard(this,'${sid}')">
             ${isFav ? '❤️' : '🤍'}
           </button>
           <img src="${poster}" onerror="this.src='https://via.placeholder.com/300x400?text=No+Image'" alt="">
@@ -60,8 +69,28 @@
         </div>`;
     }
 
-    // ═══ TOGGLE FAVORITE FROM CARD ═══
-    window.toggleFavCard = function(btn, animeId) {
+    // ═══ CARD CLICK HANDLER (Event Delegation) ═══
+    function attachCardClickHandlers() {
+      document.querySelectorAll(".anime-card").forEach(card => {
+        // Agar already attached hai toh skip
+        if (card.dataset.clickAttached === "true") return;
+        card.dataset.clickAttached = "true";
+        
+        card.addEventListener("click", function(e) {
+          // Agar heart button pe click hua toh skip
+          if (e.target.closest(".heart-btn")) return;
+          
+          const id = this.dataset.id;
+          if (id) {
+            window.goToAnime(decodeURIComponent(id));
+          }
+        });
+      });
+    }
+
+    // ═══ TOGGLE FAVORITE ═══
+    window.toggleFavCard = function(btn, encodedId) {
+      const animeId = decodeURIComponent(encodedId);
       const anime = allAnime.find(a => a.id === animeId);
       if (!anime) return;
       const added = ToonFav.toggle(anime);
@@ -90,9 +119,15 @@
     function renderHero(list) {
       const el = document.getElementById("heroSlider");
       if (!el) return;
-      if (!list.length) { document.getElementById("heroSection").style.display = "none"; return; }
-      el.innerHTML = list.map(a => `
-        <div class="hero-card" onclick="location.href='anime.html?id=${a.id}'">
+      if (!list.length) { 
+        const hs = document.getElementById("heroSection");
+        if (hs) hs.style.display = "none"; 
+        return; 
+      }
+      el.innerHTML = list.map(a => {
+        const sid = safeId(a.id);
+        return `
+        <div class="hero-card" data-id="${sid}">
           <img src="${a.banner || a.poster || ''}" onerror="this.src='https://via.placeholder.com/800x400'">
           <div class="hero-overlay">
             <span class="hero-tag">🔥 TRENDING</span>
@@ -100,12 +135,19 @@
             <p>
               ${getYear(a) ? `<span>📅 ${getYear(a)}</span>` : ''}
               ${a.rating ? `<span>⭐ ${a.rating}</span>` : ''}
-              ${getGenres(a).split(",")[0].trim() ? `<span>🎭 ${getGenres(a).split(",")[0].trim()}</span>` : ''}
             </p>
-            <span class="hero-play">▶ ${window.t ? t('watch_now') : 'Watch Now'}</span>
+            <span class="hero-play">▶ Watch Now</span>
           </div>
         </div>
-      `).join("");
+      `}).join("");
+      
+      // Hero click handlers
+      el.querySelectorAll(".hero-card").forEach(card => {
+        card.addEventListener("click", function() {
+          const id = this.dataset.id;
+          if (id) window.goToAnime(decodeURIComponent(id));
+        });
+      });
     }
 
     function renderNewlyUpdated(list) {
@@ -113,6 +155,7 @@
       if (!el) return;
       if (!list.length) { el.innerHTML = '<p class="empty-msg" style="flex:0 0 100%">No anime yet.</p>'; return; }
       el.innerHTML = list.map(a => cardHTML(a, true, null)).join("");
+      attachCardClickHandlers();
     }
 
     function renderTop10(list) {
@@ -121,6 +164,7 @@
       const sorted = [...list].sort((a,b) => (parseFloat(b.rating)||0) - (parseFloat(a.rating)||0)).slice(0,10);
       if (!sorted.length) { el.innerHTML = '<p class="empty-msg" style="flex:0 0 100%">No Top 10 yet.</p>'; return; }
       el.innerHTML = sorted.map((a,i) => cardHTML(a, false, i+1)).join("");
+      attachCardClickHandlers();
     }
 
     function renderGenres() {
@@ -141,6 +185,7 @@
       if (!el) return;
       if (!list.length) { el.innerHTML = '<p class="empty-msg">No anime found.</p>'; return; }
       el.innerHTML = list.map(a => cardHTML(a, false, null)).join("");
+      attachCardClickHandlers();
     }
 
     // ═══ FILTERS ═══
@@ -184,7 +229,7 @@
 
     window.toggleFilterPanel = function() {
       const p = document.getElementById("filterPanel");
-      p.classList.toggle("open");
+      if (p) p.classList.toggle("open");
     };
 
     // ═══ SEARCH ═══
@@ -193,14 +238,19 @@
       if (!q) { applyFilters(); return; }
       const filtered = allAnime.filter(a => (a.title||"").toLowerCase().includes(q));
       renderAllAnime(filtered);
-      document.getElementById("all").scrollIntoView({ behavior: "smooth" });
+      const el = document.getElementById("all");
+      if (el) el.scrollIntoView({ behavior: "smooth" });
     };
 
-    // ═══ HOME PAGE ═══
+    // ═══ HOME PAGE LOAD ═══
     if (document.getElementById("allAnime")) {
+      console.log("🏠 Home page detected");
+      
       animeRef.on("value", (snapshot) => {
         const data = snapshot.val() || {};
         allAnime = Object.entries(data).map(([id, val]) => ({ id, ...val }));
+        console.log("✅ Loaded", allAnime.length, "anime");
+        
         const sorted = [...allAnime].sort((a,b) => (b.updatedAt||b.createdAt||0) - (a.updatedAt||a.createdAt||0));
 
         renderHero(sorted.slice(0, 5));
@@ -209,13 +259,17 @@
         renderGenres();
         renderAllAnime(allAnime);
 
-        // Populate filter dropdowns
+        // Populate year filter
         const years = [...new Set(allAnime.map(a => getYear(a)).filter(Boolean))].sort().reverse();
         const yearSel = document.getElementById("filterYear");
         if (yearSel) {
           yearSel.innerHTML = '<option value="All">All Years</option>' +
             years.map(y => `<option value="${y}">${y}</option>`).join("");
         }
+      }, (error) => {
+        console.error("❌ Firebase error:", error);
+        document.getElementById("allAnime").innerHTML = 
+          '<p class="empty-msg">Error: ' + error.message + '</p>';
       });
 
       const sb = document.getElementById("searchBtn");
@@ -233,15 +287,18 @@
         const history = JSON.parse(localStorage.getItem("toonflix_history") || "[]");
         if (!history.length) { section.style.display = "none"; return; }
         section.style.display = "block";
-        el.innerHTML = history.slice(0, 10).map(h => `
-          <div class="anime-card" onclick="location.href='watch.html?anime=${h.animeId}&ep=${h.epNumber}'">
+        el.innerHTML = history.slice(0, 10).map(h => {
+          const sid = safeId(h.animeId);
+          return `
+          <div class="anime-card" data-id="${sid}">
             <img src="${h.poster || 'https://via.placeholder.com/300x400'}">
             <div class="card-info">
               <h3>${h.title}</h3>
               <p>EP ${h.epNumber} ${h.epTitle ? "• " + h.epTitle : ""}</p>
             </div>
-          </div>
-        `).join("");
+          </div>`;
+        }).join("");
+        attachCardClickHandlers();
       } catch (e) {}
     };
     if (document.getElementById("continueWatching")) {
@@ -256,7 +313,12 @@
       const params = new URLSearchParams(window.location.search);
       const id = params.get("id");
       const el = document.getElementById("detailContainer");
-      if (!id || !el) return;
+      if (!id || !el) { 
+        console.log("No ID or container");
+        return; 
+      }
+
+      console.log("📺 Loading detail for:", id);
 
       animeRef.child(id).on("value", (snap) => {
         const a = snap.val();
@@ -269,7 +331,6 @@
         const isFav = ToonFav.isFav(id);
         const userRating = ToonRating.get(id);
 
-        // ═══ EPISODES ═══
         let episodesHTML = "";
         if (a.episodes) {
           const eps = Object.entries(a.episodes).sort((x,y) => x[1].number - y[1].number);
@@ -277,7 +338,7 @@
             const buttons = [];
             if (ep.telegram) buttons.push(`<a href="${ep.telegram}" target="_blank" rel="noopener" class="ep-action-btn tg">📱 Telegram</a>`);
             if (ep.streaming || ep.streaming2 || ep.streaming3 || ep.link) {
-              buttons.push(`<a href="watch.html?anime=${id}&ep=${ep.number}" class="ep-action-btn stream">🎬 Watch Online</a>`);
+              buttons.push(`<a href="watch.html?anime=${encodeURIComponent(id)}&ep=${ep.number}" class="ep-action-btn stream">🎬 Watch Online</a>`);
             }
             if (ep.download) buttons.push(`<a href="${ep.download}" target="_blank" rel="noopener" class="ep-action-btn dl">⬇️ Download</a>`);
             const btnHTML = buttons.length ? `<div class="ep-actions">${buttons.join("")}</div>` : '<p class="ep-no-link">⚠️ Koi link nahi</p>';
@@ -302,74 +363,70 @@
                 ${genreList.map(g => `<span class="meta-tag">${g}</span>`).join("")}
               </div>
               <div class="detail-actions">
-                <button class="detail-btn fav ${isFav?'active':''}" onclick="toggleFavDetail('${id}')">
+                <button class="detail-btn fav ${isFav?'active':''}" onclick="toggleFavDetail('${esc(id)}')">
                   ${isFav ? '❤️ Saved' : '🤍 Add to Favorites'}
                 </button>
-                <button class="detail-btn share" onclick="shareAnime('${esc(a.title)}','${id}')">📤 Share</button>
+                <button class="detail-btn share" onclick="shareAnime('${esc(a.title)}','${esc(id)}')">📤 Share</button>
               </div>
               <p class="detail-desc">${a.description || "No description."}</p>
             </div>
           </div>
 
-          <!-- RATING -->
           <div class="rating-section">
             <h3>⭐ Rate this anime</h3>
             <div class="star-rating" id="starRating">
               ${[1,2,3,4,5].map(i => `
-                <button class="star ${userRating >= i ? 'active' : ''}" onclick="setRating('${id}',${i})">★</button>
+                <button class="star ${userRating >= i ? 'active' : ''}" onclick="setRating('${esc(id)}',${i})">★</button>
               `).join("")}
             </div>
             <p class="rating-text">${userRating ? `Aapne ${userRating} star diya` : "Abhi tak rating nahi di"}</p>
           </div>
 
-          <!-- EPISODES -->
           <div class="episodes-section">
             <h2>📺 Episodes</h2>
             <div class="episode-grid-new">${episodesHTML}</div>
           </div>
 
-          <!-- COMMENTS -->
           <div class="comments-section">
             <h2>💬 Comments</h2>
             <div class="comment-form">
-              <input id="commentName" placeholder="${ToonUser.get() ? ToonUser.get().name : 'Aapka naam...'}" value="${ToonUser.get() ? ToonUser.get().name : ''}" maxlength="30">
+              <input id="commentName" placeholder="Aapka naam..." value="${ToonUser.get() ? ToonUser.get().name : ''}" maxlength="30">
               <textarea id="commentText" placeholder="Comment likhein..." maxlength="500"></textarea>
-              <button class="comment-post-btn" onclick="postComment('${id}')">📩 Post Comment</button>
+              <button class="comment-post-btn" onclick="postComment('${esc(id)}')">📩 Post Comment</button>
             </div>
             <div class="comments-list" id="commentsList">
-              <p class="empty-msg">Loading comments...</p>
+              <p class="empty-msg">Loading...</p>
             </div>
           </div>
         `;
 
-        // Load comments
         loadComments(id);
       });
     };
 
-    // ═══ FAVORITES (Detail) ═══
     window.toggleFavDetail = function(id) {
-      const anime = allAnime.find(a => a.id === id) || { id };
       animeRef.child(id).once("value").then(s => {
         const data = { id, ...s.val() };
         const added = ToonFav.toggle(data);
-        document.querySelector(".detail-btn.fav").classList.toggle("active", added);
-        document.querySelector(".detail-btn.fav").innerHTML = added ? "❤️ Saved" : "🤍 Add to Favorites";
-        showToast(added ? "❤️ Added to favorites!" : "Removed");
+        const btn = document.querySelector(".detail-btn.fav");
+        if (btn) {
+          btn.classList.toggle("active", added);
+          btn.innerHTML = added ? "❤️ Saved" : "🤍 Add to Favorites";
+        }
+        showToast(added ? "❤️ Added!" : "Removed");
       });
     };
 
-    // ═══ RATING ═══
     window.setRating = function(animeId, rating) {
       ToonRating.set(animeId, rating);
       document.querySelectorAll(".star").forEach((s, i) => {
         s.classList.toggle("active", i < rating);
       });
-      document.querySelector(".rating-text").textContent = `Aapne ${rating} star diya`;
+      const txt = document.querySelector(".rating-text");
+      if (txt) txt.textContent = `Aapne ${rating} star diya`;
       showToast(`⭐ ${rating} star diya!`);
     };
 
-    // ═══ COMMENTS (Firebase) ═══
     window.postComment = function(animeId) {
       const name = document.getElementById("commentName").value.trim() || "Anonymous";
       const text = document.getElementById("commentText").value.trim();
@@ -419,7 +476,6 @@
       return `${day}d ago`;
     }
 
-    // ═══ SHARE ═══
     window.shareAnime = function(title, id) {
       const url = window.location.origin + window.location.pathname.replace(/anime\.html.*/, `anime.html?id=${id}`);
       if (navigator.share) {
