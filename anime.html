@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Anime Details - ToonFlix</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,14 +13,18 @@
   <a href="index.html" class="logo">
     <span class="logo-icon">🔥</span>
     <span class="logo-text">Toon<span>Flix</span></span>
+    <span class="logo-badge">HINDI</span>
   </a>
-  <div class="header-actions">
-    <a href="index.html" class="admin-btn">← Home</a>
+  <div class="header-extras">
+    <button class="header-icon-btn" onclick="toggleTheme()" id="themeBtn" title="Theme">🌙</button>
+    <button class="header-icon-btn" onclick="toggleLang()" title="Language">🌐</button>
+    <a href="profile.html" class="header-icon-btn" title="Profile">👤</a>
+    <a href="login.html" class="admin-btn">Admin</a>
   </div>
 </header>
 
 <div class="detail-container" id="detailContainer">
-  <!-- Dynamic Content -->
+  <p class="empty-msg" style="text-align:center;padding:60px 20px;">⏳ Loading anime details...</p>
 </div>
 
 <footer class="premium-footer">
@@ -27,10 +32,31 @@
   <p class="footer-copy">© 2025 ToonFlix Hindi — All Rights Reserved</p>
 </footer>
 
+<script>
+function toggleTheme() {
+  if (typeof ToonTheme === "undefined") return;
+  const t = ToonTheme.toggle();
+  const btn = document.getElementById("themeBtn");
+  if (btn) btn.textContent = t === "dark" ? "🌙" : "☀️";
+}
+function toggleLang() {
+  if (typeof ToonLang === "undefined") return;
+  ToonLang.toggle();
+}
+document.addEventListener("DOMContentLoaded", function() {
+  if (typeof ToonTheme !== "undefined") {
+    const t = ToonTheme.get();
+    const btn = document.getElementById("themeBtn");
+    if (btn) btn.textContent = t === "dark" ? "🌙" : "☀️";
+  }
+});
+</script>
+
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="user.js"></script>
+<script src="i18n.js"></script>
 <script src="analytics.js"></script>
 <script src="script.js"></script>
-<script>loadAnimeDetail();</script>
 </body>
 </html>
