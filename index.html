@@ -4,24 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>ToonFlix Hindi - Premium Anime Streaming</title>
-<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- ═══ PREMIUM HEADER ═══ -->
+<!-- ═══ HEADER ═══ -->
 <header class="top-header">
   <a href="index.html" class="logo">
     <span class="logo-icon">🔥</span>
     <span class="logo-text">Toon<span>Flix</span></span>
     <span class="logo-badge">HINDI</span>
   </a>
-  <div class="header-actions">
-    <button class="icon-btn" onclick="focusSearch()">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-      </svg>
-    </button>
+  <div class="header-extras">
+    <button class="header-icon-btn" onclick="toggleTheme()" id="themeBtn" title="Theme">🌙</button>
+    <button class="header-icon-btn" onclick="toggleLang()" id="langBtn" title="Language">🌐</button>
+    <a href="profile.html" class="header-icon-btn" title="Profile">👤</a>
     <a href="login.html" class="admin-btn">Admin</a>
   </div>
 </header>
@@ -33,6 +33,47 @@
   </svg>
   <input type="text" id="searchInput" placeholder="Anime, movie, genre search karein...">
   <button id="searchBtn">GO</button>
+</div>
+
+<!-- ═══ ADVANCED FILTER ═══ -->
+<div style="text-align:center;">
+  <button class="filter-panel-btn" onclick="toggleFilterPanel()">🔍 Advanced Filter</button>
+</div>
+
+<div class="filter-panel" id="filterPanel">
+  <div class="filter-row">
+    <div>
+      <label>📅 Year</label>
+      <select id="filterYear">
+        <option value="All">All Years</option>
+      </select>
+    </div>
+    <div>
+      <label>⭐ Min Rating</label>
+      <select id="filterRating">
+        <option value="All">Any</option>
+        <option value="6">6+</option>
+        <option value="7">7+</option>
+        <option value="8">8+</option>
+        <option value="9">9+</option>
+      </select>
+    </div>
+    <div>
+      <label>🎬 Format</label>
+      <select id="filterFormat">
+        <option value="All">All</option>
+        <option value="TV">TV Series</option>
+        <option value="MOVIE">Movie</option>
+        <option value="OVA">OVA</option>
+        <option value="ONA">ONA</option>
+        <option value="SPECIAL">Special</option>
+      </select>
+    </div>
+  </div>
+  <div class="filter-actions">
+    <button class="apply" onclick="applyAdvancedFilter()">✅ Apply Filter</button>
+    <button class="reset" onclick="resetAdvancedFilter()">🔄 Reset</button>
+  </div>
 </div>
 
 <!-- ═══ HERO BANNER ═══ -->
@@ -50,9 +91,9 @@
   <div class="row-header">
     <div class="row-title-wrap">
       <span class="row-dot" style="background:#22d3ee;"></span>
-      <h2>Continue Watching</h2>
+      <h2 data-i18n="continue_watching">Continue Watching</h2>
     </div>
-    <button onclick="clearHistory()" class="see-all">Clear</button>
+    <button onclick="clearHistory()" class="see-all" data-i18n="clear">Clear</button>
   </div>
   <div class="row-scroll" id="continueWatching"></div>
 </section>
@@ -62,9 +103,9 @@
   <div class="row-header">
     <div class="row-title-wrap">
       <span class="row-dot" style="background:#ff2d92;"></span>
-      <h2>Newly Updated</h2>
+      <h2 data-i18n="newly_updated">Newly Updated</h2>
     </div>
-    <a href="#all" class="see-all">See All →</a>
+    <a href="#all" class="see-all" data-i18n="see_all">See All →</a>
   </div>
   <div class="row-scroll" id="newlyUpdated"></div>
 </section>
@@ -74,7 +115,7 @@
   <div class="row-header">
     <div class="row-title-wrap">
       <span class="row-dot" style="background:#fbbf24;"></span>
-      <h2>Top 10 This Week</h2>
+      <h2 data-i18n="top_10">Top 10 This Week</h2>
     </div>
   </div>
   <div class="row-scroll" id="top10Grid"></div>
@@ -85,53 +126,56 @@
   <div class="row-header">
     <div class="row-title-wrap">
       <span class="row-dot" style="background:#a855f7;"></span>
-      <h2>All Anime</h2>
+      <h2 data-i18n="all_anime">All Anime</h2>
     </div>
   </div>
   <div class="cards-grid" id="allAnime"></div>
 </section>
 
-<!-- ═══ PREMIUM FOOTER ═══ -->
+<!-- ═══ FOOTER ═══ -->
 <footer class="premium-footer">
   <div class="footer-logo">🔥 Toon<span>Flix</span> Hindi</div>
   <p>Premium Anime Streaming • Made with ❤️ in India</p>
   <div class="footer-links">
-    <a href="index.html">Home</a>
-    <a href="#all">All Anime</a>
-    <a href="login.html">Admin</a>
+    <a href="index.html" data-i18n="home">Home</a>
+    <a href="#all" data-i18n="all_anime">All Anime</a>
+    <a href="profile.html" data-i18n="profile">Profile</a>
+    <a href="login.html" data-i18n="admin">Admin</a>
   </div>
   <p class="footer-copy">© 2025 ToonFlix Hindi — All Rights Reserved</p>
 </footer>
 
-<!-- ═══ PREMIUM BOTTOM NAV ═══ -->
+<!-- ═══ BOTTOM NAV ═══ -->
 <nav class="bottom-nav">
   <a href="index.html" class="active">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>
     </svg>
-    <small>Home</small>
+    <small data-i18n="home">Home</small>
   </a>
   <a href="javascript:focusSearch()">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
       <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
     </svg>
-    <small>Search</small>
+    <small data-i18n="search">Search</small>
   </a>
   <a href="javascript:scrollToGenres()">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
       <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
       <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
     </svg>
-    <small>Genres</small>
+    <small data-i18n="genres">Genres</small>
   </a>
-  <a href="login.html">
+  <a href="profile.html">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
     </svg>
-    <small>Admin</small>
+    <small data-i18n="profile">Profile</small>
   </a>
 </nav>
 
+<!-- ═══ SCRIPTS ═══ -->
 <script>
 function focusSearch() {
   document.getElementById("searchInput").focus();
@@ -145,11 +189,42 @@ function clearHistory() {
   localStorage.removeItem("toonflix_history");
   location.reload();
 }
+
+// ═══ THEME TOGGLE ═══
+function toggleTheme() {
+  if (typeof ToonTheme === "undefined") return;
+  const t = ToonTheme.toggle();
+  document.getElementById("themeBtn").textContent = t === "dark" ? "🌙" : "☀️";
+  if (typeof showToast === "function") {
+    showToast(t === "dark" ? "🌙 Dark mode" : "☀️ Light mode");
+  }
+}
+
+// ═══ LANGUAGE TOGGLE ═══
+function toggleLang() {
+  if (typeof ToonLang === "undefined") return;
+  const l = ToonLang.toggle();
+  if (typeof showToast === "function") {
+    showToast(l === "hi" ? "🇮🇳 हिंदी" : "🇬🇧 English");
+  }
+}
+
+// ═══ INITIALIZE ON LOAD ═══
+document.addEventListener("DOMContentLoaded", function() {
+  // Theme button icon set karo
+  if (typeof ToonTheme !== "undefined") {
+    const t = ToonTheme.get();
+    const btn = document.getElementById("themeBtn");
+    if (btn) btn.textContent = t === "dark" ? "🌙" : "☀️";
+  }
+});
 </script>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="script.js"></script>
+<script src="user.js"></script>
+<script src="i18n.js"></script>
 <script src="analytics.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
