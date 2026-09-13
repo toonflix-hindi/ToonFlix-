@@ -20,7 +20,7 @@
   </a>
   <div class="header-extras">
     <button class="header-icon-btn" onclick="toggleTheme()" id="themeBtn" title="Theme">🌙</button>
-    <button class="header-icon-btn" onclick="toggleLang()" id="langBtn" title="Language">🌐</button>
+    <button class="header-icon-btn" onclick="toggleLang()" title="Language">🌐</button>
     <a href="profile.html" class="header-icon-btn" title="Profile">👤</a>
     <a href="login.html" class="admin-btn">Admin</a>
   </div>
@@ -35,6 +35,15 @@
   <button id="searchBtn">GO</button>
 </div>
 
+<!-- ═══ SEARCH RESULTS BOX ═══ -->
+<div class="search-results-box" id="searchResultsBox" style="display:none;">
+  <div class="search-results-header">
+    <span id="searchResultsTitle">Search Results</span>
+    <button onclick="closeSearchResults()" class="search-close-btn">✕</button>
+  </div>
+  <div class="search-results-grid" id="searchResultsGrid"></div>
+</div>
+
 <!-- ═══ ADVANCED FILTER ═══ -->
 <div style="text-align:center;">
   <button class="filter-panel-btn" onclick="toggleFilterPanel()">🔍 Advanced Filter</button>
@@ -44,9 +53,7 @@
   <div class="filter-row">
     <div>
       <label>📅 Year</label>
-      <select id="filterYear">
-        <option value="All">All Years</option>
-      </select>
+      <select id="filterYear"><option value="All">All Years</option></select>
     </div>
     <div>
       <label>⭐ Min Rating</label>
@@ -168,14 +175,13 @@
   </a>
   <a href="profile.html">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-      <circle cx="12" cy="7" r="4"/>
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
     </svg>
     <small data-i18n="profile">Profile</small>
   </a>
 </nav>
 
-<!-- ═══ SCRIPTS ═══ -->
+<!-- ═══ HEADER HELPERS ═══ -->
 <script>
 function focusSearch() {
   document.getElementById("searchInput").focus();
@@ -189,33 +195,20 @@ function clearHistory() {
   localStorage.removeItem("toonflix_history");
   location.reload();
 }
-
-// ═══ THEME TOGGLE ═══
 function toggleTheme() {
   if (typeof ToonTheme === "undefined") return;
   const t = ToonTheme.toggle();
   document.getElementById("themeBtn").textContent = t === "dark" ? "🌙" : "☀️";
-  if (typeof showToast === "function") {
-    showToast(t === "dark" ? "🌙 Dark mode" : "☀️ Light mode");
-  }
+  if (typeof showToast === "function") showToast(t === "dark" ? "🌙 Dark mode" : "☀️ Light mode");
 }
-
-// ═══ LANGUAGE TOGGLE ═══
 function toggleLang() {
   if (typeof ToonLang === "undefined") return;
-  const l = ToonLang.toggle();
-  if (typeof showToast === "function") {
-    showToast(l === "hi" ? "🇮🇳 हिंदी" : "🇬🇧 English");
-  }
+  ToonLang.toggle();
 }
-
-// ═══ INITIALIZE ON LOAD ═══
 document.addEventListener("DOMContentLoaded", function() {
-  // Theme button icon set karo
   if (typeof ToonTheme !== "undefined") {
-    const t = ToonTheme.get();
     const btn = document.getElementById("themeBtn");
-    if (btn) btn.textContent = t === "dark" ? "🌙" : "☀️";
+    if (btn) btn.textContent = ToonTheme.get() === "dark" ? "🌙" : "☀️";
   }
 });
 </script>
