@@ -30,35 +30,34 @@
 
 <div class="admin-container">
 
-  <!-- ═══ MYANIMELIST SEARCH (JIKAN API) ═══ -->
-  <section class="admin-section">
-    <h2>🔍 Search Anime (MyAnimeList — Auto Fetch)</h2>
-    
-    <div class="search-panel-box">
-      <input 
-        id="malSearchInput" 
-        placeholder="Anime ka naam likhein... (jaise Naruto, One Piece, Attack on Titan)" 
-        autocomplete="off"
-        onkeyup="if(event.key==='Enter')searchMAL()"
-      >
-      <button class="primary-btn search-btn-inline" onclick="searchMAL()">
-        🔍 Search
-      </button>
-    </div>
+  <!-- ═══ ANILIST SEARCH ═══ -->
+<section class="admin-section">
+  <h2>🔍 Search Anime (AniList — Auto Fetch)</h2>
+  
+  <div class="search-panel-box">
+    <input 
+      id="malSearchInput" 
+      placeholder="Anime ka naam likhein... (jaise Naruto, One Piece, Attack on Titan)" 
+      autocomplete="off"
+      onkeyup="if(event.key==='Enter')searchMAL()"
+    >
+    <button class="primary-btn search-btn-inline" onclick="searchMAL()">
+      🔍 Search
+    </button>
+  </div>
 
-    <p class="search-hint-text">
-      💡 MyAnimeList se automatic poster, year, rating, genres, description sab aa jayega
-    </p>
+  <p class="search-hint-text">
+    💡 AniList se automatic poster, year, rating, genres, description sab aa jayega
+  </p>
 
-    <!-- Loading -->
-    <div id="malLoading" style="display:none;text-align:center;padding:20px;">
-      <p class="empty-msg">🔄 Searching MyAnimeList...</p>
-    </div>
+  <!-- Loading -->
+  <div id="malLoading" style="display:none;text-align:center;padding:20px;">
+    <p class="empty-msg">🔄 Searching AniList...</p>
+  </div>
 
-    <!-- Search Results -->
-    <div id="malResults" class="anilist-results"></div>
-  </section>
-
+  <!-- Search Results -->
+  <div id="malResults" class="anilist-results"></div>
+</section>
   <!-- ═══ MANUAL ADD / EDIT ANIME ═══ -->
   <section class="admin-section">
     <h2>✏️ Manual Add / Edit Anime</h2>
