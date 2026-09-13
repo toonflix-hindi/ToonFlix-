@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════
-// TOONFLIX ADMIN PANEL - COMPLETE
+// TOONFLIX ADMIN PANEL - ANILIST API VERSION
 // ═══════════════════════════════════════════
 
 const firebaseConfig = {
@@ -13,42 +13,103 @@ let allAnime = [];
 let currentEditId = null;
 
 // ═══════════════════════════════════════════
-// MYANIMELIST (JIKAN API) SEARCH
+// ANILIST API CONFIG
 // ═══════════════════════════════════════════
-const JIKAN_URL = "https://api.jikan.moe/v4/anime";
+const ANILIST_URL = "https://graphql.anilist.co";
 
+const ANILIST_QUERY = `
+  query ($search: String) {
+    Page(page: 1, perPage: 12) {
+      media(search: $search, type: ANIME, sort: SEARCH_MATCH) {
+        id
+        title { romaji english }
+        coverImage { large }
+        bannerImage
+        genres
+        episodes
+        averageScore
+        popularity
+        format
+        status
+        startDate { year }
+        description(asHtml: false)
+      }
+    }
+  }
+`;
+
+function stripHtml(html) {
+  return (html || "")
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&amp;/g, "&")
+    .trim();
+}
+
+// ═══════════════════════════════════════════
+// SEARCH FUNCTION (AniList)
+// ═══════════════════════════════════════════
 function searchMAL() {
   const input = document.getElementById("malSearchInput");
   const results = document.getElementById("malResults");
   const loading = document.getElementById("malLoading");
-  const query = input.value.trim();
 
+  if (!input || !results) {
+    alert("Search box missing hai. admin.html update karo.");
+    return;
+  }
+
+  const query = input.value.trim();
   if (!query) {
     results.innerHTML = '<p class="empty-msg">⚠️ Anime ka naam likhein</p>';
     return;
   }
 
+  console.log("🔍 Searching AniList for:", query);
   results.innerHTML = "";
-  loading.style.display = "block";
+  if (loading) loading.style.display = "block";
 
-  fetch(`${JIKAN_URL}?q=${encodeURIComponent(query)}&limit=12&sfw=true`)
-    .then(res => {
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      return res.json();
+  fetch(ANILIST_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify({
+      query: ANILIST_QUERY,
+      variables: { search: query }
     })
-    .then(data => {
-      loading.style.display = "none";
-      const list = data?.data || [];
-      renderMALResults(list);
-    })
-    .catch(err => {
-      console.error("Jikan error:", err);
-      loading.style.display = "none";
-      results.innerHTML = '<p class="empty-msg">❌ MyAnimeList se connect nahi ho paya. 1 minute baad try karo.</p>';
-    });
+  })
+  .then(res => {
+    console.log("📥 Status:", res.status);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return res.json();
+  })
+  .then(data => {
+    console.log("✅ Data received");
+    if (loading) loading.style.display = "none";
+    const list = data?.data?.Page?.media || [];
+    console.log("📊 Results:", list.length);
+    renderAniListResults(list);
+  })
+  .catch(err => {
+    console.error("❌ AniList error:", err);
+    if (loading) loading.style.display = "none";
+    results.innerHTML = `
+      <div class="empty-msg" style="padding:30px;text-align:center;background:rgba(255,45,146,0.1);border:1px solid rgba(255,45,146,0.3);border-radius:12px;">
+        <p style="color:#ff6b9d;font-weight:700;margin-bottom:8px;">❌ AniList se connect nahi ho paya</p>
+        <p style="font-size:0.82rem;color:#a1a1b5;">Internet check karo ya 1 minute baad try karo.</p>
+      </div>
+    `;
+  });
 }
 
-function renderMALResults(list) {
+// ═══════════════════════════════════════════
+// RENDER RESULTS
+// ═══════════════════════════════════════════
+function renderAniListResults(list) {
   const el = document.getElementById("malResults");
 
   if (!list.length) {
@@ -60,14 +121,16 @@ function renderMALResults(list) {
     <p class="search-hint-text">✅ ${list.length} results — Jo anime add karna hai uska <strong>Add</strong> button click karo</p>
     <div class="anilist-grid">
       ${list.map((m, i) => {
-        const title = m.title_english || m.title || "Untitled";
-        const year = m.year || (m.aired?.prop?.from?.year) || "";
-        const rating = m.score ? m.score.toFixed(1) : "";
-        const genre = (m.genres || []).slice(0, 2).map(g => g.name).join(", ");
+        const title = m.title.english || m.title.romaji || "Untitled";
+        const year = m.startDate?.year || "";
+        const rating = m.averageScore ? (m.averageScore / 10).toFixed(1) : "";
+        const genre = (m.genres || []).slice(0, 2).join(", ");
         const episodes = m.episodes || "";
-        const type = m.type || "TV";
-        const poster = m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || "";
-        const malId = m.mal_id;
+        const format = m.format || "TV";
+        const poster = m.coverImage?.large || "";
+
+        // Data ko encode karke pass karo (safe for special characters)
+        const dataEncoded = encodeURIComponent(JSON.stringify(m));
 
         return `
           <div class="anilist-card">
@@ -80,13 +143,12 @@ function renderMALResults(list) {
               <div class="anilist-meta">
                 ${year ? `<span>📅 ${year}</span>` : ''}
                 ${episodes ? `<span>🎬 ${episodes} eps</span>` : ''}
-                ${type ? `<span>📺 ${type}</span>` : ''}
+                ${format ? `<span>📺 ${format}</span>` : ''}
               </div>
               <p class="anilist-genre">${genre}</p>
               <button 
                 class="primary-btn anilist-add-btn" 
-                data-mal-id="${malId}"
-                onclick="addFromMAL(${malId}, this)"
+                onclick="addFromAniListEncoded('${dataEncoded}', this)"
               >
                 ➕ Add to Library
               </button>
@@ -98,54 +160,61 @@ function renderMALResults(list) {
   `;
 }
 
-function addFromMAL(malId, btn) {
+// ═══════════════════════════════════════════
+// ADD FROM ANILIST TO FIREBASE
+// ═══════════════════════════════════════════
+function addFromAniListEncoded(encodedData, btn) {
+  try {
+    const media = JSON.parse(decodeURIComponent(encodedData));
+    addFromAniList(media, btn);
+  } catch (e) {
+    console.error("Decode error:", e);
+    alert("Data decode error. Dobara try karo.");
+    btn.disabled = false;
+    btn.textContent = "➕ Add to Library";
+  }
+}
+
+function addFromAniList(media, btn) {
   btn.disabled = true;
-  btn.textContent = "⏳ Fetching details...";
+  btn.textContent = "⏳ Adding...";
 
-  fetch(`${JIKAN_URL}/${malId}/full`)
-    .then(res => res.json())
-    .then(data => {
-      const m = data?.data;
-      if (!m) throw new Error("Anime not found");
+  const title = media.title?.english || media.title?.romaji || "Untitled";
+  const year = media.startDate?.year ? String(media.startDate.year) : "";
+  const rating = media.averageScore ? (media.averageScore / 10).toFixed(1) : "";
+  const genres = (media.genres || []).join(", ");
+  const episodes = media.episodes ? String(media.episodes) : "";
+  const desc = stripHtml(media.description).slice(0, 800);
+  const poster = media.coverImage?.large || "";
+  const banner = media.bannerImage || "";
+  const format = media.format || "TV";
 
-      const title = m.title_english || m.title || "Untitled";
-      const year = m.year || (m.aired?.prop?.from?.year ? String(m.aired.prop.from.year) : "");
-      const rating = m.score ? m.score.toFixed(1) : "";
-      const genres = (m.genres || []).map(g => g.name).join(", ");
-      const episodes = m.episodes ? String(m.episodes) : "";
-      const desc = m.synopsis ? m.synopsis.slice(0, 800) : "";
-      const poster = m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || "";
-      const banner = m.trailer?.images?.maximum_image_url || "";
-      const type = m.type || "TV";
+  const payload = {
+    title,
+    poster,
+    banner,
+    year,
+    rating,
+    genres,
+    totalEpisodes: episodes,
+    description: desc,
+    format,
+    anilistId: media.id,
+    top10: false,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
 
-      const payload = {
-        title,
-        poster,
-        banner,
-        year,
-        rating,
-        genres,
-        totalEpisodes: episodes,
-        description: desc,
-        format: type,
-        malId: malId,
-        top10: false,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      };
-
-      return animeRef.push(payload).then(() => {
-        btn.textContent = "✅ Added!";
-        btn.style.background = "linear-gradient(135deg, #10b981, #059669)";
-        showToast(`✅ "${title}" added!`);
-      });
-    })
-    .catch(err => {
-      console.error("Add error:", err);
-      btn.disabled = false;
-      btn.textContent = "❌ Retry";
-      alert("Error: " + err.message);
-    });
+  animeRef.push(payload).then(() => {
+    btn.textContent = "✅ Added!";
+    btn.style.background = "linear-gradient(135deg, #10b981, #059669)";
+    showToast(`✅ "${title}" added!`);
+  }).catch(err => {
+    console.error(err);
+    btn.disabled = false;
+    btn.textContent = "❌ Retry";
+    alert("Error: " + err.message);
+  });
 }
 
 // ═══════════════════════════════════════════
@@ -330,7 +399,6 @@ function addMultiQualityEpisode() {
   const thumb = document.getElementById("mqThumb").value.trim();
 
   if (!num) { alert("Episode Number zaroori hai!"); return; }
-
   if (!q480 && !q720 && !q1080 && !q4k && !telegram) {
     alert("Kam se kam ek link daalo!");
     return;
