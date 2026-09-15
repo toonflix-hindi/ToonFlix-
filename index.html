@@ -213,6 +213,194 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 
+<!-- ═══════════════════════════════════════════ -->
+<!-- TELEGRAM JOIN POPUP — ToonFlix Hindi -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="tg-popup-overlay" id="tgPopupOverlay">
+  <div class="tg-popup">
+    <button class="tg-popup-close" onclick="closeTgPopup()">✕</button>
+    <div class="tg-popup-icon">📢</div>
+    <h3>Join ToonFlix Hindi Telegram</h3>
+    <p>Latest anime updates, new episodes aur exclusive content ke liye humara Telegram channel join karein!</p>
+    <a href="https://t.me/ToonFlix_Hindi" 
+       target="_blank" 
+       rel="noopener" 
+       class="tg-popup-btn" 
+       onclick="closeTgPopup()">
+      <span>📱</span> Join Telegram Channel
+    </a>
+    <button class="tg-popup-later" onclick="closeTgPopup()">Maybe Later</button>
+  </div>
+</div>
+
+<style>
+.tg-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 99999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: tgFadeIn 0.3s ease;
+}
+.tg-popup-overlay.show { display: flex; }
+@keyframes tgFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.tg-popup {
+  background: linear-gradient(160deg, #0a0e1a, #0f1524);
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  border-radius: 24px;
+  padding: 40px 28px 28px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 60px rgba(6, 182, 212, 0.3);
+  animation: tgPopIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes tgPopIn {
+  from { transform: scale(0.8) translateY(20px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.tg-popup-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.3s;
+}
+.tg-popup-close:hover {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  transform: rotate(90deg) scale(1.1);
+}
+
+.tg-popup-icon {
+  font-size: 3.5rem;
+  margin-bottom: 12px;
+  animation: tgIconBounce 2s infinite;
+  filter: drop-shadow(0 0 20px rgba(6, 182, 212, 0.6));
+}
+@keyframes tgIconBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.tg-popup h3 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #fff, #67e8f9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.tg-popup p {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.tg-popup-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #0088cc, #00a8e8);
+  color: #fff;
+  padding: 15px 24px;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 10px 30px rgba(0, 136, 204, 0.5);
+  transition: all 0.3s;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.tg-popup-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transition: left 0.5s;
+}
+.tg-popup-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 40px rgba(0, 136, 204, 0.7);
+}
+.tg-popup-btn:hover::before { left: 100%; }
+
+.tg-popup-later {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 8px 16px;
+  font-family: inherit;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+.tg-popup-later:hover { color: #94a3b8; }
+</style>
+
+<script>
+(function tgPopupInit() {
+  const STORAGE_KEY = "toonflix_tg_popup_shown";
+  const SHOW_DELAY = 5000;
+  const COOLDOWN = 24 * 60 * 60 * 1000;
+  
+  const lastShown = localStorage.getItem(STORAGE_KEY);
+  if (lastShown) {
+    const elapsed = Date.now() - parseInt(lastShown);
+    if (elapsed < COOLDOWN) return;
+  }
+  
+  setTimeout(() => {
+    const overlay = document.getElementById("tgPopupOverlay");
+    if (overlay) {
+      overlay.classList.add("show");
+      localStorage.setItem(STORAGE_KEY, Date.now().toString());
+    }
+  }, SHOW_DELAY);
+})();
+
+window.closeTgPopup = function() {
+  const overlay = document.getElementById("tgPopupOverlay");
+  if (overlay) overlay.classList.remove("show");
+};
+
+document.addEventListener("click", function(e) {
+  if (e.target.id === "tgPopupOverlay") closeTgPopup();
+});
+
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") closeTgPopup();
+});
+</script>
+<!-- ═══════════════════════════════════════════ -->
+<!-- END TELEGRAM POPUP -->
+<!-- ═══════════════════════════════════════════ -->
+
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="user.js"></script>
