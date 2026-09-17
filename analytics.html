@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Analytics Dashboard - ToonFlix</title>
+<title>Analytics - ToonFlix</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="analytics-style.css">
 <script>
@@ -30,44 +30,36 @@
 
 <div class="analytics-container">
 
-  <!-- KPI Cards -->
+  <!-- KPI -->
   <div class="kpi-grid">
     <div class="kpi-card pink">
       <div class="kpi-icon">👥</div>
-      <div class="kpi-info">
-        <p>Aaj ke Users</p>
-        <h3 id="todayUsers">-</h3>
-      </div>
+      <div class="kpi-info"><p>Aaj ke Users</p><h3 id="todayUsers">-</h3></div>
     </div>
     <div class="kpi-card purple">
       <div class="kpi-icon">📄</div>
-      <div class="kpi-info">
-        <p>Aaj ke Views</p>
-        <h3 id="todayViews">-</h3>
-      </div>
+      <div class="kpi-info"><p>Aaj ke Views</p><h3 id="todayViews">-</h3></div>
     </div>
     <div class="kpi-card cyan">
       <div class="kpi-icon">🌐</div>
-      <div class="kpi-info">
-        <p>Total Views</p>
-        <h3 id="totalViews">-</h3>
-      </div>
+      <div class="kpi-info"><p>Total Views</p><h3 id="totalViews">-</h3></div>
     </div>
     <div class="kpi-card gold">
       <div class="kpi-icon">⭐</div>
-      <div class="kpi-info">
-        <p>Total Users</p>
-        <h3 id="totalUsers">-</h3>
-      </div>
+      <div class="kpi-info"><p>Total Users</p><h3 id="totalUsers">-</h3></div>
     </div>
   </div>
 
-  <!-- Last 7 Days Chart -->
+  <!-- 7 Day Chart -->
   <section class="analytics-section">
     <h2>📅 Last 7 Days Trend</h2>
-    <div class="chart-wrap">
-      <div class="chart-bars" id="chartBars"></div>
-    </div>
+    <div class="chart-wrap"><div class="chart-bars" id="chartBars"></div></div>
+  </section>
+
+  <!-- Peak Hours -->
+  <section class="analytics-section">
+    <h2>⏰ Peak Hours (24 Hours)</h2>
+    <div class="hours-chart" id="peakHoursChart"></div>
   </section>
 
   <!-- Top Anime -->
@@ -76,10 +68,34 @@
     <div class="top-list" id="topAnimeList"></div>
   </section>
 
+  <!-- Top Episodes -->
+  <section class="analytics-section">
+    <h2>📺 Top 10 Episodes</h2>
+    <div class="top-list" id="topEpisodesList"></div>
+  </section>
+
+  <!-- Referrers -->
+  <section class="analytics-section">
+    <h2>🔗 Traffic Sources</h2>
+    <div class="page-list" id="referrerList"></div>
+  </section>
+
   <!-- Devices -->
   <section class="analytics-section">
     <h2>📱 Devices</h2>
     <div class="device-grid" id="deviceGrid"></div>
+  </section>
+
+  <!-- Browsers -->
+  <section class="analytics-section">
+    <h2>🌐 Browsers</h2>
+    <div class="device-grid" id="browserGrid"></div>
+  </section>
+
+  <!-- Session Stats -->
+  <section class="analytics-section">
+    <h2>⏱️ Session Statistics</h2>
+    <div class="device-grid" id="sessionStats"></div>
   </section>
 
   <!-- Pages -->
@@ -88,7 +104,7 @@
     <div class="page-list" id="pageList"></div>
   </section>
 
-  <!-- Recent Visitors -->
+  <!-- Recent -->
   <section class="analytics-section">
     <h2>🕐 Recent Visitors</h2>
     <div class="recent-list" id="recentList"></div>
@@ -107,7 +123,7 @@
 <script src="analytics-dashboard.js"></script>
 <script>
 function logoutAnalytics() {
-  if (!confirm("Logout karna chahte ho?")) return;
+  if (!confirm("Logout?")) return;
   sessionStorage.removeItem("toonflix_admin");
   localStorage.removeItem("toonflix_admin");
   window.location.href = "login.html";
