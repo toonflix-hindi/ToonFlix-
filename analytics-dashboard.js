@@ -1,3 +1,7 @@
+// ═══════════════════════════════════════════
+// TOONFLIX ANALYTICS DASHBOARD
+// ═══════════════════════════════════════════
+
 const firebaseConfig = {
   databaseURL: "https://toonflix-wed-default-rtdb.firebaseio.com/"
 };
@@ -8,29 +12,47 @@ const analyticsRef = db.ref("analytics");
 analyticsRef.on("value", (snap) => {
   const data = snap.val() || {};
   const today = getTodayKey();
-
-  // KPI
   const todayData = data.daily?.[today] || {};
-  document.getElementById("todayUsers").textContent = Object.keys(todayData.visitors || {}).length;
-  document.getElementById("todayViews").textContent = todayData.pageviews || 0;
-  document.getElementById("totalViews").textContent = data.total?.pageviews || 0;
-  document.getElementById("totalUsers").textContent = Object.keys(data.users || {}).length;
 
+  // ═══ KPI ═══
+  const todayUsers = Object.keys(todayData.visitors || {}).length;
+  const todayViews = todayData.pageviews || 0;
+  const totalViews = data.total?.pageviews || 0;
+  const totalUsers = Object.keys(data.users || {}).length;
+
+  setText("todayUsers", todayUsers);
+  setText("todayViews", todayViews);
+  setText("totalViews", totalViews);
+  setText("totalUsers", totalUsers);
+
+  // ═══ Render Sections ═══
   renderChart(data.daily || {});
   renderTopAnime(data.episodes || {});
+  renderTopEpisodes(data.topEpisodes || {});
   renderDevices(data.devices || {});
+  renderBrowsers(data.browsers || {});
+  renderReferrers(data.referrers || {});
+  renderPeakHours(data.hours || {});
   renderPages(data.pages || {});
   renderRecent(data.recent || {});
   renderAllDays(data.daily || {});
+  renderSessionStats(data.sessions || {});
 });
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
 
 function getTodayKey() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
 
+// ═══ 7 Day Chart ═══
 function renderChart(daily) {
   const el = document.getElementById("chartBars");
+  if (!el) return;
   const last7 = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
@@ -38,35 +60,32 @@ function renderChart(daily) {
     const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
     const dayData = daily[key] || {};
     last7.push({
-      key,
       label: d.toLocaleDateString("en-IN", { weekday: "short" }),
       date: d.getDate(),
       users: Object.keys(dayData.visitors || {}).length
     });
   }
-  const maxUsers = Math.max(...last7.map(d => d.users), 1);
+  const max = Math.max(...last7.map(d => d.users), 1);
   el.innerHTML = last7.map(d => {
-    const height = (d.users / maxUsers) * 100;
+    const h = (d.users / max) * 100;
     return `
       <div class="chart-bar-wrap">
         <div class="chart-bar-value">${d.users}</div>
-        <div class="chart-bar" style="height: ${Math.max(height, 5)}%"></div>
-        <div class="chart-bar-label">
-          <strong>${d.label}</strong>
-          <small>${d.date}</small>
-        </div>
-      </div>
-    `;
+        <div class="chart-bar" style="height: ${Math.max(h, 5)}%"></div>
+        <div class="chart-bar-label"><strong>${d.label}</strong><small>${d.date}</small></div>
+      </div>`;
   }).join("");
 }
 
+// ═══ Top Anime ═══
 function renderTopAnime(episodes) {
   const el = document.getElementById("topAnimeList");
+  if (!el) return;
   const list = Object.entries(episodes)
     .map(([id, a]) => ({ id, title: a.title || "Untitled", plays: a.plays || 0, lastPlayed: a.lastPlayed || 0 }))
-    .sort((x, y) => y.plays - x.plays).slice(0, 10);
-
-  if (!list.length) { el.innerHTML = '<p class="empty-msg">No anime watched yet.</p>'; return; }
+    .sort((x, y) => y.plays - x.plays)
+    .slice(0, 10);
+  if (!list.length) { el.innerHTML = '<p class="empty-msg">No data.</p>'; return; }
   el.innerHTML = list.map((a, i) => `
     <div class="top-item">
       <div class="top-rank">${i + 1}</div>
@@ -75,52 +94,140 @@ function renderTopAnime(episodes) {
         <small>Last: ${a.lastPlayed ? timeAgo(a.lastPlayed) : "never"}</small>
       </div>
       <div class="top-plays"><span>▶ ${a.plays}</span><small>plays</small></div>
-    </div>
-  `).join("");
+    </div>`).join("");
 }
 
+// ═══ Top Episodes ═══
+function renderTopEpisodes(topEpisodes) {
+  const el = document.getElementById("topEpisodesList");
+  if (!el) return;
+  const list = Object.values(topEpisodes)
+    .sort((a, b) => (b.plays || 0) - (a.plays || 0))
+    .slice(0, 10);
+  if (!list.length) { el.innerHTML = '<p class="empty-msg">No episode plays yet.</p>'; return; }
+  el.innerHTML = list.map((ep, i) => `
+    <div class="top-item">
+      <div class="top-rank">${i + 1}</div>
+      <div class="top-info">
+        <strong>${ep.title || "Untitled"}</strong>
+        <small>Episode ${ep.epNum || "?"}</small>
+      </div>
+      <div class="top-plays"><span>▶ ${ep.plays || 0}</span><small>plays</small></div>
+    </div>`).join("");
+}
+
+// ═══ Devices ═══
 function renderDevices(devices) {
   const el = document.getElementById("deviceGrid");
+  if (!el) return;
   const total = Object.values(devices).reduce((a, b) => a + b, 0) || 1;
   const icons = { Mobile: "📱", Desktop: "💻", Tablet: "📲" };
-  el.innerHTML = Object.entries(devices).map(([device, count]) => {
-    const percent = ((count / total) * 100).toFixed(1);
+  el.innerHTML = Object.entries(devices).map(([d, c]) => {
+    const p = ((c / total) * 100).toFixed(1);
     return `
       <div class="device-card">
-        <div class="device-icon">${icons[device] || "🌐"}</div>
+        <div class="device-icon">${icons[d] || "🌐"}</div>
         <div class="device-info">
-          <strong>${device}</strong>
-          <p>${count} views (${percent}%)</p>
+          <strong>${d}</strong>
+          <p>${c} views (${p}%)</p>
         </div>
-      </div>
-    `;
-  }).join("") || '<p class="empty-msg">No data yet.</p>';
+      </div>`;
+  }).join("") || '<p class="empty-msg">No data.</p>';
 }
 
-function renderPages(pages) {
-  const el = document.getElementById("pageList");
-  const total = Object.values(pages).reduce((a, b) => a + b, 0) || 1;
-  const icons = { home: "🏠", "anime-detail": "📺", watch: "▶️", login: "🔐", admin: "⚙️", analytics: "📊" };
-  const list = Object.entries(pages).sort((a, b) => b[1] - a[1]);
-  el.innerHTML = list.map(([page, count]) => {
-    const percent = ((count / total) * 100).toFixed(1);
+// ═══ Browsers ═══
+function renderBrowsers(browsers) {
+  const el = document.getElementById("browserGrid");
+  if (!el) return;
+  const total = Object.values(browsers).reduce((a, b) => a + b, 0) || 1;
+  const icons = { Chrome: "🌐", Safari: "🧭", Firefox: "🦊", Edge: "🌀", Opera: "🎭", Other: "❓" };
+  el.innerHTML = Object.entries(browsers).map(([b, c]) => {
+    const p = ((c / total) * 100).toFixed(1);
+    return `
+      <div class="device-card">
+        <div class="device-icon">${icons[b] || "🌐"}</div>
+        <div class="device-info">
+          <strong>${b}</strong>
+          <p>${c} views (${p}%)</p>
+        </div>
+      </div>`;
+  }).join("") || '<p class="empty-msg">No data.</p>';
+}
+
+// ═══ Referrers ═══
+function renderReferrers(referrers) {
+  const el = document.getElementById("referrerList");
+  if (!el) return;
+  const total = Object.values(referrers).reduce((a, b) => a + b, 0) || 1;
+  const icons = {
+    Google: "🔍", YouTube: "▶️", Telegram: "📱", Facebook: "📘",
+    Instagram: "📷", Twitter: "🐦", WhatsApp: "💬", Reddit: "👽",
+    Direct: "🚀", Internal: "🔗", Other: "🌐"
+  };
+  const list = Object.entries(referrers).sort((a, b) => b[1] - a[1]);
+  el.innerHTML = list.map(([r, c]) => {
+    const p = ((c / total) * 100).toFixed(1);
     return `
       <div class="page-item">
-        <div class="page-icon">${icons[page] || "📄"}</div>
+        <div class="page-icon">${icons[r] || "🌐"}</div>
         <div class="page-info">
-          <strong>${page}</strong>
-          <div class="page-bar-bg"><div class="page-bar-fill" style="width: ${percent}%"></div></div>
+          <strong>${r}</strong>
+          <div class="page-bar-bg"><div class="page-bar-fill" style="width:${p}%"></div></div>
         </div>
-        <div class="page-count">${count}</div>
-      </div>
-    `;
-  }).join("") || '<p class="empty-msg">No data yet.</p>';
+        <div class="page-count">${c}</div>
+      </div>`;
+  }).join("") || '<p class="empty-msg">No data.</p>';
 }
 
+// ═══ Peak Hours ═══
+function renderPeakHours(hours) {
+  const el = document.getElementById("peakHoursChart");
+  if (!el) return;
+  const data = [];
+  let max = 1;
+  for (let i = 0; i < 24; i++) {
+    const key = String(i).padStart(2, "0");
+    const count = hours[key] || 0;
+    data.push({ hour: i, count });
+    if (count > max) max = count;
+  }
+  el.innerHTML = data.map(d => {
+    const h = (d.count / max) * 100;
+    return `<div class="hour-bar" style="height:${Math.max(h, 3)}%" data-hour="${d.hour}" title="${d.hour}:00 - ${d.count} views"></div>`;
+  }).join("");
+}
+
+// ═══ Pages ═══
+function renderPages(pages) {
+  const el = document.getElementById("pageList");
+  if (!el) return;
+  const total = Object.values(pages).reduce((a, b) => a + b, 0) || 1;
+  const icons = {
+    home: "🏠", "anime-detail": "📺", watch: "▶️",
+    login: "🔐", admin: "⚙️", analytics: "📊", profile: "👤"
+  };
+  el.innerHTML = Object.entries(pages).sort((a, b) => b[1] - a[1]).map(([p, c]) => {
+    const pc = ((c / total) * 100).toFixed(1);
+    return `
+      <div class="page-item">
+        <div class="page-icon">${icons[p] || "📄"}</div>
+        <div class="page-info">
+          <strong>${p}</strong>
+          <div class="page-bar-bg"><div class="page-bar-fill" style="width:${pc}%"></div></div>
+        </div>
+        <div class="page-count">${c}</div>
+      </div>`;
+  }).join("") || '<p class="empty-msg">No data.</p>';
+}
+
+// ═══ Recent ═══
 function renderRecent(recent) {
   const el = document.getElementById("recentList");
-  const list = Object.entries(recent).map(([k, v]) => ({ ...v, key: k }))
-    .sort((a, b) => b.time - a.time).slice(0, 20);
+  if (!el) return;
+  const list = Object.entries(recent)
+    .map(([k, v]) => ({ ...v, key: k }))
+    .sort((a, b) => b.time - a.time)
+    .slice(0, 20);
   if (!list.length) { el.innerHTML = '<p class="empty-msg">No recent visitors.</p>'; return; }
   const icons = { Mobile: "📱", Desktop: "💻", Tablet: "📲" };
   el.innerHTML = list.map(v => `
@@ -128,22 +235,23 @@ function renderRecent(recent) {
       <div class="recent-device">${icons[v.device] || "🌐"}</div>
       <div class="recent-info">
         <strong>${v.page || "unknown"}</strong>
-        <small>${v.visitorId || "Anonymous"}</small>
+        <small>${v.browser || ""} ${v.visitorId || ""}</small>
       </div>
       <div class="recent-time">${timeAgo(v.time)}</div>
-    </div>
-  `).join("");
+    </div>`).join("");
 }
 
+// ═══ All Days ═══
 function renderAllDays(daily) {
   const el = document.getElementById("allDaysList");
+  if (!el) return;
   const list = Object.entries(daily).map(([date, d]) => ({
     date,
     users: Object.keys(d.visitors || {}).length,
     views: d.pageviews || 0,
     plays: d.episodePlays || 0
   })).sort((a, b) => b.date.localeCompare(a.date));
-  if (!list.length) { el.innerHTML = '<p class="empty-msg">No data yet.</p>'; return; }
+  if (!list.length) { el.innerHTML = '<p class="empty-msg">No data.</p>'; return; }
   el.innerHTML = `
     <div class="all-days-table">
       <div class="all-days-header">
@@ -157,10 +265,37 @@ function renderAllDays(daily) {
           <span>▶️ ${d.plays}</span>
         </div>
       `).join("")}
-    </div>
-  `;
+    </div>`;
 }
 
+// ═══ Session Stats ═══
+function renderSessionStats(sessions) {
+  const el = document.getElementById("sessionStats");
+  if (!el) return;
+  const list = Object.values(sessions || {});
+  if (!list.length) { el.innerHTML = '<p class="empty-msg">No session data yet.</p>'; return; }
+  const totalDuration = list.reduce((a, s) => a + (s.duration || 0), 0);
+  const avgDuration = Math.floor(totalDuration / list.length);
+  const minutes = Math.floor(avgDuration / 60);
+  const seconds = avgDuration % 60;
+  el.innerHTML = `
+    <div class="device-card">
+      <div class="device-icon">⏱️</div>
+      <div class="device-info">
+        <strong>Average Session</strong>
+        <p>${minutes}m ${seconds}s</p>
+      </div>
+    </div>
+    <div class="device-card">
+      <div class="device-icon">👥</div>
+      <div class="device-info">
+        <strong>Total Sessions</strong>
+        <p>${list.length}</p>
+      </div>
+    </div>`;
+}
+
+// ═══ Time Ago ═══
 function timeAgo(ts) {
   const diff = Date.now() - ts;
   const min = Math.floor(diff / 60000);
@@ -168,6 +303,5 @@ function timeAgo(ts) {
   if (min < 60) return `${min}m ago`;
   const hr = Math.floor(min / 60);
   if (hr < 24) return `${hr}h ago`;
-  const day = Math.floor(hr / 24);
-  return `${day}d ago`;
+  return `${Math.floor(hr / 24)}d ago`;
 }
