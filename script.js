@@ -1,5 +1,6 @@
 // ═══════════════════════════════════════════
-// TOONFLIX - SCRIPT.JS (WITH LANGUAGE BADGE)
+// TOONFLIX HINDI - SCRIPT.JS
+// With Language Badge + Season System
 // ═══════════════════════════════════════════
 
 (function() {
@@ -20,6 +21,7 @@
     let currentGenre = "All";
     let currentFilters = { genre: "All", year: "All", rating: "All", format: "All" };
 
+    // ═══ HELPERS ═══
     function getGenres(a) { return (a.genres || a.genres2 || "Anime").toString(); }
     function getYear(a) {
       if (!a.year) return "";
@@ -33,7 +35,9 @@
       window.location.href = "anime.html?id=" + encodeURIComponent(id);
     };
 
-    // ═══ CARD HTML (WITH LANGUAGE BADGE) ═══
+    // ═══════════════════════════════════════════
+    // CARD HTML — Language Badge Under Title
+    // ═══════════════════════════════════════════
     function cardHTML(anime, showNew, rank) {
       const poster = anime.poster || "https://via.placeholder.com/300x400?text=No+Image";
       const isNew = showNew && (Date.now() - (anime.createdAt||0) < 7*24*60*60*1000);
@@ -45,14 +49,16 @@
       return `
         <div class="anime-card ${rank?'top10-card':''}" data-id="${sid}">
           ${anime.rating ? `<span class="rating-badge">⭐ ${anime.rating}</span>` : ''}
-          ${anime.language ? `<span class="language-badge">📢 ${anime.language}</span>` : ''}
           ${isNew ? '<span class="badge-new">NEW</span>' : ''}
           ${rank ? `<span class="top10-rank">${rank}</span>` : ''}
           <button class="heart-btn ${isFav?'active':''}" onclick="event.stopPropagation();toggleFavCard(this,'${sid}')">${isFav ? '❤️' : '🤍'}</button>
           <img src="${poster}" onerror="this.src='https://via.placeholder.com/300x400?text=No+Image'" alt="">
           <div class="card-info">
             <h3>${anime.title || "Untitled"}</h3>
-            <p>${year} ${genre ? "• " + genre : ""}</p>
+            <div class="card-meta-row">
+              <p>${year} ${genre ? "• " + genre : ""}</p>
+              ${anime.language ? `<span class="language-badge-inline">📢 ${anime.language}</span>` : ''}
+            </div>
           </div>
         </div>`;
     }
@@ -76,7 +82,7 @@
       const added = ToonFav.toggle(anime);
       btn.classList.toggle("active", added);
       btn.textContent = added ? "❤️" : "🤍";
-      showToast(added ? "❤️ Added!" : "Removed");
+      showToast(added ? "❤️ Favorites me add kiya!" : "Removed");
     };
 
     function showToast(msg) {
@@ -93,6 +99,7 @@
     }
     window.showToast = showToast;
 
+    // ═══ HERO SLIDER ═══
     function renderHero(list) {
       const el = document.getElementById("heroSlider");
       if (!el) return;
@@ -122,6 +129,7 @@
       });
     }
 
+    // ═══ NEWLY UPDATED ═══
     function renderNewlyUpdated(list) {
       const el = document.getElementById("newlyUpdated");
       if (!el) return;
@@ -130,6 +138,7 @@
       attachCardClickHandlers();
     }
 
+    // ═══ TOP 10 ═══
     function renderTop10(list) {
       const el = document.getElementById("top10Grid");
       if (!el) return;
@@ -139,6 +148,7 @@
       attachCardClickHandlers();
     }
 
+    // ═══ GENRES ═══
     function renderGenres() {
       const el = document.getElementById("genreBtns");
       if (!el) return;
@@ -264,6 +274,7 @@
       });
     });
 
+    // ═══ ALL ANIME ═══
     function renderAllAnime(list) {
       const el = document.getElementById("allAnime");
       if (!el) return;
@@ -319,7 +330,9 @@
       setInterval(window.renderContinueWatching, 3000);
     }
 
-    // ═══ DETAIL PAGE ═══
+    // ═══════════════════════════════════════════
+    // DETAIL PAGE
+    // ═══════════════════════════════════════════
     window.loadAnimeDetail = function() {
       const params = new URLSearchParams(window.location.search);
       const id = params.get("id");
@@ -340,6 +353,7 @@
         let episodesHTML = "";
         let seasonsHTML = "";
 
+        // ═══ SEASON STRUCTURE ═══
         if (a.seasons && Object.keys(a.seasons).length > 0) {
           const seasonKeys = Object.keys(a.seasons).sort((x, y) => {
             const nx = parseInt(x.replace(/\D/g, "")) || 0;
@@ -383,6 +397,7 @@
             }).join("");
           }
         } 
+        // ═══ LEGACY FLAT EPISODES ═══
         else if (a.episodes) {
           const eps = Object.entries(a.episodes).sort((x,y) => x[1].number - y[1].number);
           episodesHTML = eps.map(([eid, ep]) => {
