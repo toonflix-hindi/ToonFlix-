@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════
 // TOONFLIX HINDI - SCRIPT.JS
-// With Language Badge + Season System
+// Language Badge Only On Detail Page
 // ═══════════════════════════════════════════
 
 (function() {
@@ -36,7 +36,7 @@
     };
 
     // ═══════════════════════════════════════════
-    // CARD HTML — Language Badge Under Title
+    // CARD HTML — NO LANGUAGE BADGE (Only On Detail Page)
     // ═══════════════════════════════════════════
     function cardHTML(anime, showNew, rank) {
       const poster = anime.poster || "https://via.placeholder.com/300x400?text=No+Image";
@@ -55,10 +55,7 @@
           <img src="${poster}" onerror="this.src='https://via.placeholder.com/300x400?text=No+Image'" alt="">
           <div class="card-info">
             <h3>${anime.title || "Untitled"}</h3>
-            <div class="card-meta-row">
-              <p>${year} ${genre ? "• " + genre : ""}</p>
-              ${anime.language ? `<span class="language-badge-inline">📢 ${anime.language}</span>` : ''}
-            </div>
+            <p>${year} ${genre ? "• " + genre : ""}</p>
           </div>
         </div>`;
     }
@@ -331,7 +328,7 @@
     }
 
     // ═══════════════════════════════════════════
-    // DETAIL PAGE
+    // DETAIL PAGE — LANGUAGE TAG YAHAN DIKHEGA
     // ═══════════════════════════════════════════
     window.loadAnimeDetail = function() {
       const params = new URLSearchParams(window.location.search);
@@ -526,6 +523,6 @@
 
     if (document.getElementById("detailContainer")) window.loadAnimeDetail();
 
-    console.log("✅ script.js loaded (WITH LANGUAGE)");
+    console.log("✅ script.js loaded (Language only on detail page)");
   } catch (e) { console.error("❌ script.js error:", e); }
 })();
