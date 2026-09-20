@@ -44,38 +44,23 @@
     <div id="malResults" class="anilist-results"></div>
   </section>
 
-  <!-- ═══ MANUAL ADD / EDIT (LANGUAGE FIELD YAHAN HAI) ═══ -->
+  <!-- ═══ MANUAL ADD / EDIT ANIME ═══ -->
   <section class="admin-section">
     <h2>✏️ Manual Add / Edit Anime</h2>
-    
-    <!-- HIGHLIGHT: LANGUAGE FIELD KA LOCATION -->
-    <div style="background: rgba(139, 92, 246, 0.1); border: 2px dashed rgba(139, 92, 246, 0.5); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
-      <p style="color: #c4b5fd; font-weight: 700; font-size: 0.85rem; margin-bottom: 12px;">
-        📢 Language Field Yahan Hai 👇
-      </p>
-      
-      <div class="form-grid">
-        <input id="aTitle" placeholder="Anime Title *">
-        <input id="aPoster" placeholder="Poster Image URL *">
-        <input id="aBanner" placeholder="Banner Image URL">
-        <input id="aYear" placeholder="Year">
-        <input id="aRating" placeholder="Rating (e.g. 8.5)">
-        
-        <!-- LANGUAGE FIELD — YAHAN HAI -->
-        <input 
-          id="aLanguage" 
-          placeholder="📢 Language (Hindi Dubbed, English Sub, etc.)" 
-          style="border-color: rgba(139, 92, 246, 0.6); background: rgba(139, 92, 246, 0.05);"
-        >
-        
-        <input id="aGenres" placeholder="Genres (Action,Adventure)">
-        <input id="aEpisodes" placeholder="Total Episodes">
-        <textarea id="aDesc" placeholder="Description"></textarea>
-        <label class="checkbox-label">
-          <input type="checkbox" id="aTop10"> Add to Top 10
-        </label>
-        <button class="primary-btn" onclick="saveAnime()">💾 Save Anime</button>
-      </div>
+    <div class="form-grid">
+      <input id="aTitle" placeholder="Anime Title *">
+      <input id="aPoster" placeholder="Poster Image URL *">
+      <input id="aBanner" placeholder="Banner Image URL">
+      <input id="aYear" placeholder="Year">
+      <input id="aRating" placeholder="Rating (e.g. 8.5)">
+      <input id="aLanguage" placeholder="📢 Language (Hindi Dubbed, English Sub, etc.)">
+      <input id="aGenres" placeholder="Genres (Action,Adventure)">
+      <input id="aEpisodes" placeholder="Total Episodes">
+      <textarea id="aDesc" placeholder="Description"></textarea>
+      <label class="checkbox-label">
+        <input type="checkbox" id="aTop10"> Add to Top 10
+      </label>
+      <button class="primary-btn" onclick="saveAnime()">💾 Save Anime</button>
     </div>
   </section>
 
