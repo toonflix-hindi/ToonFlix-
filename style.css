@@ -1809,3 +1809,42 @@ body.light-theme .row-header h2 {
   .row-scroll .anime-card { flex: 0 0 180px; }
   .detail-banner { height: 400px; }
 }
+
+/* ═══════════════════════════════════════════ */
+/* LANGUAGE BADGE ON CARDS */
+/* ═══════════════════════════════════════════ */
+.language-badge {
+  position: absolute;
+  top: 42px;
+  right: 8px;
+  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  z-index: 3;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.6);
+  letter-spacing: 0.3px;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 500px) {
+  .language-badge {
+    font-size: 0.55rem;
+    padding: 3px 8px;
+    max-width: 80px;
+    top: 38px;
+  }
+}
+
+.meta-tag.language-tag {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+  border-color: rgba(139, 92, 246, 0.4);
+  color: #c4b5fd;
+  font-weight: 700;
+}
