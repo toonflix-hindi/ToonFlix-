@@ -1811,12 +1811,12 @@ body.light-theme .row-header h2 {
 }
 
 /* ═══════════════════════════════════════════ */
-/* LANGUAGE BADGE ON CARDS */
+/* LANGUAGE BADGE — Poster Ke Neeche Left Side */
 /* ═══════════════════════════════════════════ */
 .language-badge {
   position: absolute;
-  top: 42px;
-  right: 8px;
+  bottom: 55px;
+  left: 8px;
   background: linear-gradient(135deg, #8b5cf6, #3b82f6);
   color: #fff;
   padding: 4px 10px;
@@ -1826,7 +1826,7 @@ body.light-theme .row-header h2 {
   z-index: 3;
   box-shadow: 0 4px 12px rgba(139, 92, 246, 0.6);
   letter-spacing: 0.3px;
-  max-width: 100px;
+  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1837,14 +1837,8 @@ body.light-theme .row-header h2 {
   .language-badge {
     font-size: 0.55rem;
     padding: 3px 8px;
-    max-width: 80px;
-    top: 38px;
+    max-width: 90px;
+    bottom: 50px;
+    left: 6px;
   }
-}
-
-.meta-tag.language-tag {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
-  border-color: rgba(139, 92, 246, 0.4);
-  color: #c4b5fd;
-  font-weight: 700;
 }
