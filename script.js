@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════
-// TOONFLIX - SCRIPT.JS (FINAL + SEARCH BOX)
+// TOONFLIX - SCRIPT.JS (WITH LANGUAGE BADGE)
 // ═══════════════════════════════════════════
 
 (function() {
@@ -20,7 +20,6 @@
     let currentGenre = "All";
     let currentFilters = { genre: "All", year: "All", rating: "All", format: "All" };
 
-    // ═══ HELPERS ═══
     function getGenres(a) { return (a.genres || a.genres2 || "Anime").toString(); }
     function getYear(a) {
       if (!a.year) return "";
@@ -30,12 +29,11 @@
     function esc(s) { return String(s || "").replace(/'/g, "\\'"); }
     function safeId(id) { return encodeURIComponent(String(id)); }
 
-    // ═══ NAVIGATE ═══
     window.goToAnime = function(id) {
       window.location.href = "anime.html?id=" + encodeURIComponent(id);
     };
 
-    // ═══ CARD HTML ═══
+    // ═══ CARD HTML (WITH LANGUAGE BADGE) ═══
     function cardHTML(anime, showNew, rank) {
       const poster = anime.poster || "https://via.placeholder.com/300x400?text=No+Image";
       const isNew = showNew && (Date.now() - (anime.createdAt||0) < 7*24*60*60*1000);
@@ -47,6 +45,7 @@
       return `
         <div class="anime-card ${rank?'top10-card':''}" data-id="${sid}">
           ${anime.rating ? `<span class="rating-badge">⭐ ${anime.rating}</span>` : ''}
+          ${anime.language ? `<span class="language-badge">📢 ${anime.language}</span>` : ''}
           ${isNew ? '<span class="badge-new">NEW</span>' : ''}
           ${rank ? `<span class="top10-rank">${rank}</span>` : ''}
           <button class="heart-btn ${isFav?'active':''}" onclick="event.stopPropagation();toggleFavCard(this,'${sid}')">${isFav ? '❤️' : '🤍'}</button>
@@ -58,7 +57,6 @@
         </div>`;
     }
 
-    // ═══ CLICK HANDLERS ═══
     function attachCardClickHandlers() {
       document.querySelectorAll(".anime-card").forEach(card => {
         if (card.dataset.clickAttached === "true") return;
@@ -71,7 +69,6 @@
       });
     }
 
-    // ═══ FAV TOGGLE ═══
     window.toggleFavCard = function(btn, encodedId) {
       const animeId = decodeURIComponent(encodedId);
       const anime = allAnime.find(a => a.id === animeId);
@@ -79,10 +76,9 @@
       const added = ToonFav.toggle(anime);
       btn.classList.toggle("active", added);
       btn.textContent = added ? "❤️" : "🤍";
-      showToast(added ? "❤️ Favorites me add kiya!" : "Removed");
+      showToast(added ? "❤️ Added!" : "Removed");
     };
 
-    // ═══ TOAST ═══
     function showToast(msg) {
       let toast = document.getElementById("toonToast");
       if (!toast) {
@@ -97,7 +93,6 @@
     }
     window.showToast = showToast;
 
-    // ═══ RENDER HERO ═══
     function renderHero(list) {
       const el = document.getElementById("heroSlider");
       if (!el) return;
@@ -113,6 +108,7 @@
             <p>
               ${getYear(a) ? `<span>📅 ${getYear(a)}</span>` : ''}
               ${a.rating ? `<span>⭐ ${a.rating}</span>` : ''}
+              ${a.language ? `<span>📢 ${a.language}</span>` : ''}
             </p>
             <span class="hero-play">▶ Watch Now</span>
           </div>
@@ -126,7 +122,6 @@
       });
     }
 
-    // ═══ RENDER NEWLY UPDATED ═══
     function renderNewlyUpdated(list) {
       const el = document.getElementById("newlyUpdated");
       if (!el) return;
@@ -135,7 +130,6 @@
       attachCardClickHandlers();
     }
 
-    // ═══ RENDER TOP 10 ═══
     function renderTop10(list) {
       const el = document.getElementById("top10Grid");
       if (!el) return;
@@ -145,7 +139,6 @@
       attachCardClickHandlers();
     }
 
-    // ═══ RENDER GENRES ═══
     function renderGenres() {
       const el = document.getElementById("genreBtns");
       if (!el) return;
@@ -159,7 +152,6 @@
       ).join("");
     }
 
-    // ═══ FILTER GENRE ═══
     window.filterGenre = function(g, btn) {
       currentGenre = g;
       currentFilters.genre = g;
@@ -168,7 +160,6 @@
       applyFilters();
     };
 
-    // ═══ APPLY FILTERS ═══
     function applyFilters() {
       let list = [...allAnime];
       const f = currentFilters;
@@ -201,9 +192,7 @@
       if (p) p.classList.toggle("open");
     };
 
-    // ═══════════════════════════════════════════
-    // SEARCH — Real-time Results Box
-    // ═══════════════════════════════════════════
+    // ═══ SEARCH BOX ═══
     let searchTimeout = null;
 
     window.doSearch = function() {
@@ -213,13 +202,8 @@
       const title = document.getElementById("searchResultsTitle");
 
       if (!box || !grid) return;
+      if (!q) { box.style.display = "none"; return; }
 
-      if (!q) {
-        box.style.display = "none";
-        return;
-      }
-
-      // Filter: title, genres, year
       const filtered = allAnime.filter(a => {
         const t = (a.title || "").toLowerCase();
         const genres = getGenres(a).toLowerCase();
@@ -227,20 +211,11 @@
         return t.includes(q) || genres.includes(q) || year.includes(q);
       });
 
-      console.log("🔍 Search:", q, "→", filtered.length, "results");
-
-      // Show box
       box.style.display = "block";
-      title.textContent = filtered.length
-        ? `${filtered.length} result${filtered.length > 1 ? 's' : ''} for "${q}"`
-        : `No results for "${q}"`;
+      title.textContent = filtered.length ? `${filtered.length} result${filtered.length > 1 ? 's' : ''} for "${q}"` : `No results for "${q}"`;
 
-      // Render cards
       if (!filtered.length) {
-        grid.innerHTML = `
-          <p class="empty-msg" style="grid-column:1/-1;text-align:center;padding:20px;">
-            😔 Koi anime nahi mila. Spelling check karo ya kuch aur try karo.
-          </p>`;
+        grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1;text-align:center;padding:20px;">😔 Koi anime nahi mila.</p>';
         return;
       }
 
@@ -268,29 +243,18 @@
       if (input) input.value = "";
     };
 
-    // ═══ SEARCH LISTENERS ═══
     document.addEventListener("DOMContentLoaded", function() {
       const si = document.getElementById("searchInput");
       if (si) {
-        // Real-time search
         si.addEventListener("input", function() {
           clearTimeout(searchTimeout);
           searchTimeout = setTimeout(window.doSearch, 300);
         });
-        // Enter
-        si.addEventListener("keyup", function(e) {
-          if (e.key === "Enter") window.doSearch();
-        });
-        // ESC to close
-        si.addEventListener("keydown", function(e) {
-          if (e.key === "Escape") closeSearchResults();
-        });
+        si.addEventListener("keyup", function(e) { if (e.key === "Enter") window.doSearch(); });
+        si.addEventListener("keydown", function(e) { if (e.key === "Escape") closeSearchResults(); });
       }
-
       const sb = document.getElementById("searchBtn");
       if (sb) sb.addEventListener("click", window.doSearch);
-
-      // Click outside to close
       document.addEventListener("click", function(e) {
         const box = document.getElementById("searchResultsBox");
         const wrap = document.getElementById("searchWrap");
@@ -300,7 +264,6 @@
       });
     });
 
-    // ═══ RENDER ALL ANIME ═══
     function renderAllAnime(list) {
       const el = document.getElementById("allAnime");
       if (!el) return;
@@ -314,13 +277,9 @@
 
     // ═══ HOME PAGE LOAD ═══
     if (document.getElementById("allAnime")) {
-      console.log("🏠 Home page detected");
-
       animeRef.on("value", (snapshot) => {
         const data = snapshot.val() || {};
         allAnime = Object.entries(data).map(([id, val]) => ({ id, ...val }));
-        console.log("✅ Loaded:", allAnime.length, "anime");
-
         const sorted = [...allAnime].sort((a,b) => (b.updatedAt||b.createdAt||0) - (a.updatedAt||a.createdAt||0));
 
         renderHero(sorted.slice(0, 5));
@@ -329,17 +288,9 @@
         renderGenres();
         renderAllAnime(allAnime);
 
-        // Populate year filter
         const years = [...new Set(allAnime.map(a => getYear(a)).filter(Boolean))].sort().reverse();
         const yearSel = document.getElementById("filterYear");
-        if (yearSel) {
-          yearSel.innerHTML = '<option value="All">All Years</option>' +
-            years.map(y => `<option value="${y}">${y}</option>`).join("");
-        }
-      }, (error) => {
-        console.error("❌ Firebase error:", error);
-        const el = document.getElementById("allAnime");
-        if (el) el.innerHTML = '<p class="empty-msg">Error: ' + error.message + '</p>';
+        if (yearSel) yearSel.innerHTML = '<option value="All">All Years</option>' + years.map(y => `<option value="${y}">${y}</option>`).join("");
       });
     }
 
@@ -357,10 +308,7 @@
           return `
           <div class="anime-card" data-id="${sid}">
             <img src="${h.poster || 'https://via.placeholder.com/300x400'}">
-            <div class="card-info">
-              <h3>${h.title}</h3>
-              <p>EP ${h.epNumber}</p>
-            </div>
+            <div class="card-info"><h3>${h.title}</h3><p>EP ${h.epNumber}</p></div>
           </div>`;
         }).join("");
         attachCardClickHandlers();
@@ -390,7 +338,52 @@
         const userRating = ToonRating.get(id);
 
         let episodesHTML = "";
-        if (a.episodes) {
+        let seasonsHTML = "";
+
+        if (a.seasons && Object.keys(a.seasons).length > 0) {
+          const seasonKeys = Object.keys(a.seasons).sort((x, y) => {
+            const nx = parseInt(x.replace(/\D/g, "")) || 0;
+            const ny = parseInt(y.replace(/\D/g, "")) || 0;
+            return nx - ny;
+          });
+
+          const selectedSeason = window._selectedSeason || seasonKeys[0];
+          window._selectedSeason = selectedSeason;
+
+          seasonsHTML = `
+            <div class="season-tabs">
+              ${seasonKeys.map(sk => `
+                <button class="season-tab ${sk === selectedSeason ? 'active' : ''}" 
+                        onclick="switchSeason('${esc(sk)}')">
+                  📺 ${sk.replace(/_/g, " ")}
+                </button>
+              `).join("")}
+            </div>
+          `;
+
+          const seasonEpisodes = a.seasons[selectedSeason] || {};
+          const eps = Object.entries(seasonEpisodes).sort((x,y) => x[1].number - y[1].number);
+
+          if (eps.length === 0) {
+            episodesHTML = '<p class="empty-msg">Is season me abhi koi episode nahi hai.</p>';
+          } else {
+            episodesHTML = eps.map(([eid, ep]) => {
+              const buttons = [];
+              if (ep.telegram) buttons.push(`<a href="${ep.telegram}" target="_blank" rel="noopener" class="ep-action-btn tg">📱 Telegram</a>`);
+              if (ep.streaming || ep.streaming2 || ep.streaming3 || ep.link || ep.q480 || ep.q720 || ep.q1080) {
+                buttons.push(`<a href="watch.html?anime=${encodeURIComponent(id)}&season=${encodeURIComponent(selectedSeason)}&ep=${ep.number}" class="ep-action-btn stream">🎬 Watch Online</a>`);
+              }
+              if (ep.download) buttons.push(`<a href="${ep.download}" target="_blank" rel="noopener" class="ep-action-btn dl">⬇️ Download</a>`);
+              const btnHTML = buttons.length ? `<div class="ep-actions">${buttons.join("")}</div>` : '<p class="ep-no-link">⚠️ Koi link nahi</p>';
+              return `
+                <div class="episode-card">
+                  <div class="ep-header"><strong>EP ${ep.number}</strong>${ep.title ? `<span>${ep.title}</span>` : ''}</div>
+                  ${btnHTML}
+                </div>`;
+            }).join("");
+          }
+        } 
+        else if (a.episodes) {
           const eps = Object.entries(a.episodes).sort((x,y) => x[1].number - y[1].number);
           episodesHTML = eps.map(([eid, ep]) => {
             const buttons = [];
@@ -406,7 +399,9 @@
                 ${btnHTML}
               </div>`;
           }).join("");
-        } else { episodesHTML = "<p class='empty-msg'>No episodes yet.</p>"; }
+        } else {
+          episodesHTML = '<p class="empty-msg">No episodes yet.</p>';
+        }
 
         el.innerHTML = `
           ${banner ? `<img class="detail-banner" src="${banner}" onerror="this.style.display='none'">` : ""}
@@ -417,7 +412,8 @@
               <div class="detail-meta">
                 ${year ? `<span class="meta-tag">📅 ${year}</span>` : ""}
                 ${a.rating ? `<span class="meta-tag">⭐ ${a.rating}</span>` : ""}
-                ${a.episodes ? `<span class="meta-tag">🎬 ${Object.keys(a.episodes).length} Episodes</span>` : ""}
+                ${a.language ? `<span class="meta-tag language-tag">📢 ${a.language}</span>` : ""}
+                ${a.episodes || a.seasons ? `<span class="meta-tag">🎬 Episodes</span>` : ""}
                 ${genreList.map(g => `<span class="meta-tag">${g}</span>`).join("")}
               </div>
               <div class="detail-actions">
@@ -434,6 +430,7 @@
           </div>
           <div class="episodes-section">
             <h2>📺 Episodes</h2>
+            ${seasonsHTML}
             <div class="episode-grid-new">${episodesHTML}</div>
           </div>
           <div class="comments-section">
@@ -447,6 +444,11 @@
           </div>`;
         loadComments(id);
       });
+    };
+
+    window.switchSeason = function(seasonName) {
+      window._selectedSeason = seasonName;
+      loadAnimeDetail();
     };
 
     window.toggleFavDetail = function(id) {
@@ -504,11 +506,11 @@
     window.shareAnime = function(title, id) {
       const url = window.location.origin + window.location.pathname.replace(/anime\.html.*/, `anime.html?id=${id}`);
       if (navigator.share) navigator.share({ title, text: `Dekho: ${title}`, url });
-      else navigator.clipboard.writeText(url).then(() => showToast("📋 Link copy ho gaya!"));
+      else navigator.clipboard.writeText(url).then(() => showToast("📋 Link copy!"));
     };
 
     if (document.getElementById("detailContainer")) window.loadAnimeDetail();
 
-    console.log("✅ script.js loaded successfully");
+    console.log("✅ script.js loaded (WITH LANGUAGE)");
   } catch (e) { console.error("❌ script.js error:", e); }
 })();
