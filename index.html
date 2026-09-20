@@ -459,39 +459,64 @@ document.addEventListener("keydown", function(e) {
 </style>
 
 <script>
+// ═══════════════════════════════════════════
+// RANDOM ANIME — FIXED VERSION
+// ═══════════════════════════════════════════
 window.openRandomAnime = function() {
   console.log("🎲 Random anime clicked");
-  if (typeof allAnime === "undefined" || !allAnime || allAnime.length === 0) {
-    if (typeof animeRef !== "undefined") {
-      animeRef.once("value").then(snap => {
-        const data = snap.val() || {};
-        const list = Object.entries(data).map(([id, val]) => ({ id, ...val }));
-        if (list.length === 0) {
-          alert("⚠️ Abhi koi anime add nahi hua. Admin panel se anime add karo!");
-          return;
-        }
-        pickAndOpenRandom(list);
-      });
-    } else {
-      alert("⚠️ Data load nahi hua. Page refresh karo!");
-    }
-    return;
-  }
-  pickAndOpenRandom(allAnime);
-};
-function pickAndOpenRandom(list) {
-  const randomIdx = Math.floor(Math.random() * list.length);
-  const randomAnime = list[randomIdx];
-  console.log("🎯 Random picked:", randomAnime.title);
+  
+  // Button animation
   const btn = document.getElementById("randomAnimeBtn");
   if (btn) {
     btn.style.transform = "scale(0.9)";
     setTimeout(() => { btn.style.transform = ""; }, 200);
   }
-  setTimeout(() => {
-    window.location.href = "anime.html?id=" + encodeURIComponent(randomAnime.id);
-  }, 250);
-}
+  
+  // Firebase check
+  if (typeof firebase === "undefined") {
+    alert("❌ Firebase load nahi hua. Page refresh karo!");
+    return;
+  }
+  
+  try {
+    // Firebase se direct data fetch karo
+    const db = firebase.database();
+    const animeRef = db.ref("anime");
+    
+    console.log("📡 Fetching anime data...");
+    
+    animeRef.once("value")
+      .then(snap => {
+        const data = snap.val() || {};
+        const list = Object.entries(data).map(([id, val]) => ({ id, ...val }));
+        
+        console.log("📊 Total anime:", list.length);
+        
+        if (list.length === 0) {
+          alert("⚠️ Abhi koi anime add nahi hua. Admin panel se anime add karo!");
+          return;
+        }
+        
+        // Random pick
+        const randomIdx = Math.floor(Math.random() * list.length);
+        const randomAnime = list[randomIdx];
+        
+        console.log("🎯 Picked:", randomAnime.title);
+        
+        // Navigate to anime detail
+        window.location.href = "anime.html?id=" + encodeURIComponent(randomAnime.id);
+      })
+      .catch(err => {
+        console.error("❌ Firebase error:", err);
+        alert("❌ Error: " + err.message);
+      });
+  } catch (e) {
+    console.error("❌ Exception:", e);
+    alert("❌ Error: " + e.message);
+  }
+};
+
+console.log("✅ Random anime function loaded");
 </script>
 <!-- ═══════════════════════════════════════════ -->
 <!-- END RANDOM ANIME BUTTON -->
