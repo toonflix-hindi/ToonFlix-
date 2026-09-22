@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════
-// TOONFLIX HINDI - WATCH.JS
-// Season System + Legacy Episodes Support
+// TOONFLIX - WATCH.JS (BULLETPROOF v2)
+// Auto-detects episodes from anywhere
 // ═══════════════════════════════════════════
 
 const firebaseConfig = {
@@ -16,7 +16,7 @@ let currentSeason = "Season_1";
 let allEpisodes = [];
 let allSeasons = [];
 
-console.log("🔥 watch.js INIT");
+console.log("🔥 watch.js v2 INIT");
 
 function goBack() {
   const params = new URLSearchParams(window.location.search);
@@ -25,6 +25,13 @@ function goBack() {
   else window.location.href = "index.html";
 }
 window.goBack = goBack;
+
+// ═══ HELPER: Check if season has real episodes ═══
+function hasRealEpisodes(seasonObj) {
+  if (!seasonObj || typeof seasonObj !== "object") return false;
+  const realEps = Object.keys(seasonObj).filter(k => !k.startsWith("_"));
+  return realEps.length > 0;
+}
 
 // ═══════════════════════════════════════════
 // LOAD WATCH PAGE
@@ -41,7 +48,8 @@ function loadWatchPage() {
     return;
   }
 
-  console.log("🎬 Loading:", animeId, "Season:", seasonParam, "EP:", epNum);
+  console.log("🎬 Loading anime:", animeId);
+  console.log("📍 URL Params — Season:", seasonParam, "EP:", epNum);
 
   animeRef.child(animeId).on("value", (snap) => {
     const a = snap.val();
@@ -52,66 +60,105 @@ function loadWatchPage() {
 
     currentAnime = { id: animeId, ...a };
     currentEpNum = epNum;
-    currentSeason = seasonParam;
 
     // ═══════════════════════════════════════════
-    // SEASON SYSTEM DETECTION
+    // PRINT FULL DATA STRUCTURE (Debug)
     // ═══════════════════════════════════════════
+    console.log("📦 Anime data keys:", Object.keys(a));
+    console.log("📦 Has 'seasons'?", !!a.seasons);
+    console.log("📦 Has 'episodes'?", !!a.episodes);
+    
+    if (a.seasons) {
+      console.log("📦 Seasons found:", Object.keys(a.seasons));
+      Object.keys(a.seasons).forEach(sk => {
+        const epsCount = hasRealEpisodes(a.seasons[sk]) ? Object.keys(a.seasons[sk]).filter(k => !k.startsWith("_")).length : 0;
+        console.log(`   └─ ${sk}: ${epsCount} episodes`);
+      });
+    }
+    
+    if (a.episodes) {
+      console.log("📦 Legacy episodes:", Object.keys(a.episodes).length);
+    }
 
-    // Priority 1: Naya seasons structure
-    if (a.seasons && Object.keys(a.seasons).length > 0) {
+    // ═══════════════════════════════════════════
+    // FIND WHICH SEASON HAS EPISODES
+    // ═══════════════════════════════════════════
+    let workingSeason = null;
+    let workingEpisodes = null;
+
+    // Priority 1: Seasons structure
+    if (a.seasons && Object.keys(a.seasons).filter(k => !k.startsWith("_")).length > 0) {
       allSeasons = Object.keys(a.seasons)
         .filter(k => !k.startsWith("_"))
-        .sort((x, y) => {
-          const nx = parseInt(x.replace(/\D/g, "")) || 0;
-          const ny = parseInt(y.replace(/\D/g, "")) || 0;
-          return nx - ny;
-        });
+        .sort((x, y) => (parseInt(x.replace(/\D/g, "")) || 0) - (parseInt(y.replace(/\D/g, "")) || 0));
 
-      // Agar season valid nahi hai toh first select karo
-      if (!allSeasons.includes(currentSeason)) {
-        currentSeason = allSeasons[0];
+      // Try URL param season first
+      if (a.seasons[seasonParam] && hasRealEpisodes(a.seasons[seasonParam])) {
+        workingSeason = seasonParam;
+        workingEpisodes = a.seasons[seasonParam];
+        console.log("✅ Found episodes in URL param season:", seasonParam);
+      } else {
+        // Find FIRST season with episodes
+        for (const sk of allSeasons) {
+          if (hasRealEpisodes(a.seasons[sk])) {
+            workingSeason = sk;
+            workingEpisodes = a.seasons[sk];
+            console.log("✅ Auto-detected season with episodes:", sk);
+            break;
+          }
+        }
+        // If still none, use first season even if empty
+        if (!workingSeason && allSeasons.length > 0) {
+          workingSeason = allSeasons[0];
+          workingEpisodes = a.seasons[workingSeason] || {};
+          console.log("⚠️ No season has episodes, using first:", workingSeason);
+        }
       }
-
-      const seasonData = a.seasons[currentSeason] || {};
-      allEpisodes = Object.entries(seasonData)
-        .filter(([k, v]) => !k.startsWith("_"))
-        .map(([eid, ep]) => ({ eid, ...ep }))
-        .sort((x, y) => x.number - y.number);
-
-      console.log("📺 Season:", currentSeason, "Episodes:", allEpisodes.length);
     }
-    // Priority 2: Purane episodes structure (legacy)
+    // Priority 2: Legacy flat episodes
     else if (a.episodes && Object.keys(a.episodes).length > 0) {
+      workingSeason = "Season_1";
+      workingEpisodes = a.episodes;
       allSeasons = ["Season_1"];
-      currentSeason = "Season_1";
-      allEpisodes = Object.entries(a.episodes)
-        .map(([eid, ep]) => ({ eid, ...ep }))
-        .sort((x, y) => x.number - y.number);
-
-      console.log("📼 Legacy episodes:", allEpisodes.length);
+      console.log("✅ Using legacy episodes:", Object.keys(a.episodes).length);
     }
-    else {
-      allSeasons = [];
+
+    // ═══════════════════════════════════════════
+    // BUILD EPISODES LIST
+    // ═══════════════════════════════════════════
+    if (workingSeason && workingEpisodes) {
+      currentSeason = workingSeason;
+      allEpisodes = Object.entries(workingEpisodes)
+        .filter(([k, v]) => !k.startsWith("_") && v && typeof v === "object" && v.number !== undefined)
+        .map(([eid, ep]) => ({ eid, ...ep }))
+        .sort((x, y) => (parseInt(x.number) || 0) - (parseInt(y.number) || 0));
+      
+      console.log("📺 Final Episodes loaded:", allEpisodes.length, "from", currentSeason);
+    } else {
       allEpisodes = [];
+      console.log("❌ No episodes found anywhere");
     }
 
     // ═══ Current Episode dhundho ═══
-    const currentEp = allEpisodes.find(e => e.number === epNum);
+    const currentEp = allEpisodes.find(e => parseInt(e.number) === epNum);
 
     if (!currentEp) {
-      // Episode nahi mila — error message
+      // Error message with detailed info
       el.innerHTML = `
-        <div style="padding:60px 20px;text-align:center;">
+        <div style="padding:40px 20px;text-align:center;">
           <h2 style="font-size:1.4rem;font-weight:800;color:#67e8f9;margin-bottom:12px;">
             ${a.title || "Untitled"}
           </h2>
-          <p class="empty-msg" style="display:inline-block;padding:20px 30px;margin-bottom:20px;">
-            ⚠️ Episode ${epNum} nahi mila.<br>
-            <small style="font-size:0.75rem;color:#94a3b8;margin-top:8px;display:block;">
-              Season: ${currentSeason.replace(/_/g, " ")} • Total: ${allEpisodes.length} episodes
-            </small>
-          </p>
+          <div class="empty-msg" style="display:inline-block;padding:20px 30px;margin-bottom:20px;text-align:left;max-width:400px;">
+            <p style="font-weight:700;color:#fbbf24;margin-bottom:10px;">⚠️ Episode ${epNum} nahi mila</p>
+            <p style="font-size:0.75rem;color:#94a3b8;line-height:1.8;">
+              <b>Debug Info:</b><br>
+              • Total Seasons: ${allSeasons.length}<br>
+              • Total Episodes: ${allEpisodes.length}<br>
+              • Looking in: ${currentSeason.replace(/_/g, " ")}<br>
+              • Available EP numbers: ${allEpisodes.map(e => e.number).join(", ") || "None"}
+            </p>
+          </div>
           <div>
             <a href="anime.html?id=${encodeURIComponent(animeId)}" 
                class="primary-btn" 
@@ -127,12 +174,12 @@ function loadWatchPage() {
     // ═══ Progress Save ═══
     saveProgress(currentAnime, currentEp, currentSeason);
 
-    // ═══ Next/Prev Episode ═══
-    const idx = allEpisodes.findIndex(e => e.number === epNum);
+    // ═══ Next/Prev ═══
+    const idx = allEpisodes.findIndex(e => parseInt(e.number) === epNum);
     const prevEp = idx > 0 ? allEpisodes[idx - 1] : null;
     const nextEp = idx < allEpisodes.length - 1 ? allEpisodes[idx + 1] : null;
 
-    // ═══ Servers (multi-quality) ═══
+    // ═══ Servers ═══
     const servers = [];
     if (currentEp.q480) servers.push({ name: "480p", link: currentEp.q480, icon: "📺" });
     if (currentEp.q720) servers.push({ name: "720p", link: currentEp.q720, icon: "🎬" });
@@ -159,7 +206,6 @@ function renderPlayer(anime, ep, servers, prevEp, nextEp) {
   const safeAnimeId = encodeURIComponent(anime.id);
   const safeSeason = encodeURIComponent(currentSeason);
 
-  // ═══ Season Tabs (agar 1 se zyada seasons hai) ═══
   let seasonTabsHTML = "";
   if (allSeasons.length > 1) {
     seasonTabsHTML = `
@@ -243,7 +289,7 @@ function renderPlayer(anime, ep, servers, prevEp, nextEp) {
     </div>
 
     <div class="all-episodes-list">
-      <h3>📺 ${currentSeason.replace(/_/g, " ")} — Saare Episodes (${allEpisodes.length})</h3>
+      <h3>📺 ${currentSeason.replace(/_/g, " ")} — Episodes (${allEpisodes.length})</h3>
       <div class="ep-list-grid">
         ${allEpisodes.map(e => `
           <a href="watch.html?anime=${safeAnimeId}&season=${safeSeason}&ep=${e.number}"
@@ -265,14 +311,12 @@ function renderPlayer(anime, ep, servers, prevEp, nextEp) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-// ═══ SEASON SWITCH (WATCH PAGE) ═══
 window.switchSeasonWatch = function(encodedAnimeId, encodedSeason) {
   const animeId = decodeURIComponent(encodedAnimeId);
   const season = decodeURIComponent(encodedSeason);
   window.location.href = `watch.html?anime=${encodeURIComponent(animeId)}&season=${encodeURIComponent(season)}&ep=1`;
 };
 
-// ═══ SWITCH SERVER ═══
 function switchServer(link, btn) {
   document.querySelectorAll(".server-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
@@ -281,7 +325,6 @@ function switchServer(link, btn) {
 }
 window.switchServer = switchServer;
 
-// ═══ COMMENTS ═══
 function toggleComments() {
   const s = document.getElementById("commentsSection");
   s.style.display = s.style.display === "none" ? "block" : "none";
@@ -302,7 +345,6 @@ function addComment() {
 }
 window.addComment = addComment;
 
-// ═══ PROGRESS SAVE ═══
 function saveProgress(anime, ep, season) {
   try {
     const history = JSON.parse(localStorage.getItem("toonflix_history") || "[]");
@@ -320,7 +362,6 @@ function saveProgress(anime, ep, season) {
   } catch (e) {}
 }
 
-// ═══ TIME AGO ═══
 function timeAgo(ts) {
   const diff = Date.now() - ts;
   const min = Math.floor(diff / 60000);
@@ -331,6 +372,5 @@ function timeAgo(ts) {
   return `${Math.floor(hr / 24)}d ago`;
 }
 
-// ═══ INIT ═══
 loadWatchPage();
-console.log("✅ watch.js loaded");
+console.log("✅ watch.js v2 loaded");
