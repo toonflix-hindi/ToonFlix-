@@ -23,15 +23,17 @@
 </header>
 
 <!-- ═══ CATEGORY TABS ═══ -->
-<div class="category-tabs">
-  <div class="tab-item active" data-genre="All" onclick="filterGenre('All', this)">All</div>
-  <div class="tab-item" data-genre="Action" onclick="filterGenre('Action', this)">Action</div>
-  <div class="tab-item" data-genre="Adventure" onclick="filterGenre('Adventure', this)">Adventure</div>
-  <div class="tab-item" data-genre="Comedy" onclick="filterGenre('Comedy', this)">Comedy</div>
-  <div class="tab-item" data-genre="Drama" onclick="filterGenre('Drama', this)">Drama</div>
-  <div class="tab-item" data-genre="Fantasy" onclick="filterGenre('Fantasy', this)">Fantasy</div>
-  <div class="tab-item" data-genre="Romance" onclick="filterGenre('Romance', this)">Romance</div>
-  <div class="tab-item" data-genre="Sci-Fi" onclick="filterGenre('Sci-Fi', this)">Sci-Fi</div>
+<div class="category-tabs" id="categoryTabs">
+  <div class="tab-item active" data-genre="All">All</div>
+  <div class="tab-item" data-genre="Action">Action</div>
+  <div class="tab-item" data-genre="Adventure">Adventure</div>
+  <div class="tab-item" data-genre="Comedy">Comedy</div>
+  <div class="tab-item" data-genre="Drama">Drama</div>
+  <div class="tab-item" data-genre="Fantasy">Fantasy</div>
+  <div class="tab-item" data-genre="Romance">Romance</div>
+  <div class="tab-item" data-genre="Sci-Fi">Sci-Fi</div>
+  <div class="tab-item" data-genre="Supernatural">Supernatural</div>
+  <div class="tab-item" data-genre="Mystery">Mystery</div>
 </div>
 
 <!-- ═══ SEARCH ═══ -->
@@ -56,7 +58,7 @@
     <div class="hero-slider" id="heroSlider"></div>
   </section>
 
-  <!-- HIDDEN GENRE CHIPS (for script.js) -->
+  <!-- HIDDEN CHIPS (script.js uses these) -->
   <section class="chips-section" style="display:none;">
     <div class="chips-scroll" id="genreBtns"></div>
   </section>
@@ -79,20 +81,20 @@
     <div class="h-scroll" id="newlyUpdated"></div>
   </section>
 
-  <!-- TOP 10 -->
+  <!-- ALL ANIME (Category Filter works here) -->
+  <section class="row-section" id="all">
+    <div class="section-header">
+      <h2 class="section-title" id="allAnimeTitle">All Anime <span class="jp">すべて</span></h2>
+    </div>
+    <div class="cards-grid" id="allAnime"></div>
+  </section>
+
+  <!-- TOP 10 (Last me — neeche) -->
   <section class="row-section">
     <div class="section-header">
       <h2 class="section-title">Top 10 This Week <span class="jp">週間</span></h2>
     </div>
     <div class="h-scroll" id="top10Grid"></div>
-  </section>
-
-  <!-- ALL ANIME -->
-  <section class="row-section" id="all">
-    <div class="section-header">
-      <h2 class="section-title">All Anime <span class="jp">すべて</span></h2>
-    </div>
-    <div class="cards-grid" id="allAnime"></div>
   </section>
 
 </main>
@@ -126,6 +128,45 @@ function clearHistory() {
   localStorage.removeItem("toonflix_history");
   location.reload();
 }
+
+// ═══ CATEGORY TABS FUNCTIONALITY ═══
+document.addEventListener("DOMContentLoaded", function() {
+  document.querySelectorAll(".tab-item").forEach(tab => {
+    tab.addEventListener("click", function() {
+      // Update active state
+      document.querySelectorAll(".tab-item").forEach(t => t.classList.remove("active"));
+      this.classList.add("active");
+      
+      const genre = this.getAttribute("data-genre");
+      console.log("🎭 Category clicked:", genre);
+      
+      // Update section title
+      const titleEl = document.getElementById("allAnimeTitle");
+      if (titleEl) {
+        if (genre === "All") {
+          titleEl.innerHTML = 'All Anime <span class="jp">すべて</span>';
+        } else {
+          titleEl.innerHTML = `${genre} Anime <span class="jp">カテゴリ</span>`;
+        }
+      }
+      
+      // Filter using script.js function
+      if (typeof filterGenre === "function") {
+        filterGenre(genre, null);
+      }
+      
+      // Scroll to All Anime section
+      const allSection = document.getElementById("all");
+      if (allSection) {
+        setTimeout(() => {
+          allSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 100);
+      }
+    });
+  });
+});
+
+// ═══ RANDOM ANIME ═══
 window.openRandomAnime = function() {
   const btn = document.getElementById("randomAnimeBtn");
   if (btn) {
