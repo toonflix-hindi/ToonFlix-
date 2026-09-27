@@ -2,36 +2,34 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Watch - ToonFlix Hindi</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Watch - ToonFlix</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
-<body class="watch-body">
+<body>
 
-<!-- ═══ HEADER ═══ -->
-<header class="cr-header">
-  <a href="index.html" class="cr-logo">Toon<span>Flix</span></a>
-  <div class="cr-header-actions">
-    <button class="icon-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-    <a href="login.html" class="icon-btn"><i class="fas fa-cog"></i></a>
+<header class="top-header">
+  <a href="index.html" class="logo">
+    <span class="logo-icon">🔥</span>
+    <span class="logo-text">Toon<span>Flix</span></span>
+  </a>
+  <div class="header-actions">
+    <button class="icon-btn" onclick="goBack()">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+    </button>
+    <a href="login.html" class="admin-btn">Admin</a>
   </div>
 </header>
 
-<!-- ═══ WATCH CONTENT ═══ -->
-<div class="watch-container" id="watchContainer">
-  <div style="padding:60px 20px;text-align:center;">
-    <p class="empty-msg">⏳ Loading...</p>
-  </div>
-</div>
+<div class="watch-container" id="watchContainer"></div>
 
-<!-- ═══ SCRIPTS ═══ -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="analytics.js"></script>
+<script src="user.js"></script>
+<script src="i18n.js"></script>
 <script src="watch.js"></script>
 </body>
 </html>
