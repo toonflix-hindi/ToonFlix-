@@ -6,7 +6,7 @@
 <title>ToonFlix Hindi - Premium Anime Streaming</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -16,7 +16,6 @@
 <header class="cr-header">
   <a href="index.html" class="cr-logo">Toon<span>Flix</span></a>
   <div class="cr-header-actions">
-    <button class="icon-btn" onclick="toggleTheme()" id="themeBtn"><i class="fas fa-moon"></i></button>
     <button class="icon-btn" onclick="focusSearch()"><i class="fas fa-search"></i></button>
     <a href="profile.html" class="icon-btn"><i class="fas fa-user"></i></a>
     <a href="login.html" class="icon-btn"><i class="fas fa-cog"></i></a>
@@ -24,16 +23,18 @@
 </header>
 
 <!-- ═══ CATEGORY TABS ═══ -->
-<div class="category-tabs" id="categoryTabs">
-  <div class="tab-item active" onclick="filterGenre('All', this)">All</div>
-  <!-- Genres will be populated by script.js here -->
-  <div class="tab-item" onclick="filterGenre('Action', this)">Action</div>
-  <div class="tab-item" onclick="filterGenre('Comedy', this)">Comedy</div>
-  <div class="tab-item" onclick="filterGenre('Drama', this)">Drama</div>
-  <div class="tab-item" onclick="filterGenre('Fantasy', this)">Fantasy</div>
+<div class="category-tabs">
+  <div class="tab-item active" data-genre="All" onclick="filterGenre('All', this)">All</div>
+  <div class="tab-item" data-genre="Action" onclick="filterGenre('Action', this)">Action</div>
+  <div class="tab-item" data-genre="Adventure" onclick="filterGenre('Adventure', this)">Adventure</div>
+  <div class="tab-item" data-genre="Comedy" onclick="filterGenre('Comedy', this)">Comedy</div>
+  <div class="tab-item" data-genre="Drama" onclick="filterGenre('Drama', this)">Drama</div>
+  <div class="tab-item" data-genre="Fantasy" onclick="filterGenre('Fantasy', this)">Fantasy</div>
+  <div class="tab-item" data-genre="Romance" onclick="filterGenre('Romance', this)">Romance</div>
+  <div class="tab-item" data-genre="Sci-Fi" onclick="filterGenre('Sci-Fi', this)">Sci-Fi</div>
 </div>
 
-<!-- ═══ SEARCH BAR ═══ -->
+<!-- ═══ SEARCH ═══ -->
 <div class="search-wrap" id="searchWrap">
   <i class="fas fa-search search-icon"></i>
   <input type="text" id="searchInput" placeholder="Anime, movie, genre search karein...">
@@ -47,7 +48,7 @@
   <div class="search-results-grid" id="searchResultsGrid"></div>
 </div>
 
-<!-- ═══ MAIN CONTENT ═══ -->
+<!-- ═══ MAIN ═══ -->
 <main>
 
   <!-- HERO BANNER -->
@@ -55,7 +56,7 @@
     <div class="hero-slider" id="heroSlider"></div>
   </section>
 
-  <!-- GENRE CHIPS (Hidden - Now using category tabs) -->
+  <!-- HIDDEN GENRE CHIPS (for script.js) -->
   <section class="chips-section" style="display:none;">
     <div class="chips-scroll" id="genreBtns"></div>
   </section>
@@ -69,7 +70,7 @@
     <div class="h-scroll" id="continueWatching"></div>
   </section>
 
-  <!-- NEWLY UPDATED -->
+  <!-- RECENTLY ADDED -->
   <section class="row-section">
     <div class="section-header">
       <h2 class="section-title">Recently Added <span class="jp">最近追加</span></h2>
@@ -81,7 +82,7 @@
   <!-- TOP 10 -->
   <section class="row-section">
     <div class="section-header">
-      <h2 class="section-title">Top 10 This Week <span class="jp">週間ランキング</span></h2>
+      <h2 class="section-title">Top 10 This Week <span class="jp">週間</span></h2>
     </div>
     <div class="h-scroll" id="top10Grid"></div>
   </section>
@@ -89,7 +90,7 @@
   <!-- ALL ANIME -->
   <section class="row-section" id="all">
     <div class="section-header">
-      <h2 class="section-title">All Anime <span class="jp">すべてのアニメ</span></h2>
+      <h2 class="section-title">All Anime <span class="jp">すべて</span></h2>
     </div>
     <div class="cards-grid" id="allAnime"></div>
   </section>
@@ -106,23 +107,16 @@
     <a href="profile.html">Profile</a>
     <a href="login.html">Admin</a>
   </div>
-  <p class="footer-copy">© 2025 ToonFlix Hindi — All Rights Reserved</p>
+  <p class="footer-copy">© 2025 ToonFlix Hindi</p>
 </footer>
 
-<!-- ═══ RANDOM ANIME BUTTON ═══ -->
+<!-- ═══ RANDOM BUTTON ═══ -->
 <button class="random-anime-btn" id="randomAnimeBtn" onclick="openRandomAnime()">
   <i class="fas fa-dice"></i>
 </button>
 
 <!-- ═══ SCRIPTS ═══ -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="user.js"></script>
-<script src="i18n.js"></script>
-<script src="analytics.js"></script>
-<script src="script.js"></script>
 <script>
-// Helper functions that script.js expects
 function focusSearch() {
   document.getElementById("searchInput").focus();
   document.getElementById("searchWrap").scrollIntoView({behavior:"smooth", block:"center"});
@@ -132,11 +126,29 @@ function clearHistory() {
   localStorage.removeItem("toonflix_history");
   location.reload();
 }
-function toggleTheme() {
-  if (typeof ToonTheme === "undefined") return;
-  const t = ToonTheme.toggle();
-  document.getElementById("themeBtn").innerHTML = t === "dark" ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
-}
+window.openRandomAnime = function() {
+  const btn = document.getElementById("randomAnimeBtn");
+  if (btn) {
+    btn.style.transform = "scale(0.9)";
+    setTimeout(() => { btn.style.transform = ""; }, 200);
+  }
+  if (typeof firebase === "undefined") { alert("Page refresh karo!"); return; }
+  const db = firebase.database();
+  db.ref("anime").once("value").then(snap => {
+    const data = snap.val() || {};
+    const list = Object.entries(data).map(([id, val]) => ({ id, ...val }));
+    if (!list.length) { alert("Koi anime nahi hai!"); return; }
+    const r = list[Math.floor(Math.random() * list.length)];
+    window.location.href = "anime.html?id=" + encodeURIComponent(r.id);
+  });
+};
 </script>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="user.js"></script>
+<script src="i18n.js"></script>
+<script src="analytics.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
